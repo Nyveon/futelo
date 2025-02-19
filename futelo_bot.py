@@ -1,9 +1,10 @@
 from credentials import BOT_TOKEN
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
-from utils import filter_message, letters_by_messages, current_letters, choose_letters_to_add, index_to_character
+from config import LEVELS, MIN_MESSAGES_FOR_LEVEL
+from utils import filter_message, letters_by_messages, current_letters, choose_letters_to_add, index_to_character, current_level
 from collections import Counter
-from db import init_db, load, create_user, save
+from db import init_db, load, create_user, save, User
         
 def start(update: Update, context: CallbackContext):
 
@@ -62,6 +63,34 @@ def new_message(update: Update, context: CallbackContext):
         update.message.delete()
 
 
+def get_stats(user: User):
+
+    mensaje = f"Has enviado {user.messages_sent} mensajes\n"
+    mensaje += "Letras desbloqueadas: \n"
+    for i, letter in enumerate(user.letter_limits_list):
+        mensaje += f"{index_to_character(i)}: {letter}\n"
+    if current_level(user.messages_sent) == LEVELS - 1:
+        mensaje += "¡Has desbloqueado todas las letras!"
+    else:
+        mensaje += f"Te faltan {MIN_MESSAGES_FOR_LEVEL[current_level(user.messages_sent)+1] - user.messages_sent} mensajes para subir de nivel"
+
+    return mensaje
+
+
+def stats(update: Update, context: CallbackContext):
+    user = load(update.message.from_user.id)
+
+    if not user:
+        user = create_user(update.message.from_user.id)
+    
+    if update.message.chat.type == "private":
+        update.message.reply_text(get_stats(user))
+    else:
+        update.message.reply_text("Te enviare tus stats por dm")
+        update.message.from_user.send_message(get_stats(user))
+
+    
+
 
 def main() -> None:
 
@@ -72,6 +101,7 @@ def main() -> None:
 
     dispatcher.add_handler(CommandHandler("start", start))
     dispatcher.add_handler(CommandHandler("reglas", rules))
+    dispatcher.add_handler(CommandHandler("stats", stats))
     dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, new_message))
 
     updater.start_polling()
