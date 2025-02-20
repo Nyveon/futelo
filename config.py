@@ -25,3 +25,5 @@ assert LETTERS_AT_LEVEL[-1] == CHARACTER_LIMITS * MAX_LIMIT
 assert all(MIN_MESSAGES_FOR_LEVEL[i] < MIN_MESSAGES_FOR_LEVEL[i+1] for i in range(LEVELS-1))
 
 assert all(LETTERS_AT_LEVEL[i] < LETTERS_AT_LEVEL[i+1] for i in range(LEVELS-1))
+
+FRONTEND_URL = "http://localhost:8000"
