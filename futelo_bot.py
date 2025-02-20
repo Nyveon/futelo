@@ -1,11 +1,12 @@
 from credentials import BOT_TOKEN
 from telegram import Update
 from telegram.ext import CommandHandler, filters, MessageHandler, CallbackContext, Application
-from config import LEVELS, MIN_MESSAGES_FOR_LEVEL
+from config import LEVELS, MIN_MESSAGES_FOR_LEVEL, LAST_USER_DATA
 from utils import filter_message, letters_by_messages, current_letters, choose_letters_to_add, index_to_character, current_level
 from collections import Counter
 from db import init_db, load, create_user, save, User
-        
+import json
+
 async def start(update: Update, context: CallbackContext):
 
     if update.message.chat.type == "private":
@@ -47,22 +48,32 @@ async def new_message(update: Update, context: CallbackContext):
     if not user:
         user = create_user(update.message.from_user.id)
 
-    if filter_message(update.message.text, user.letter_limits_list):
-        user.add_message()
-
-        letter_difference = max(letters_by_messages(user.messages_sent) - current_letters(user.letter_limits_list), 0)
-
-        if letter_difference:
-            letters_to_add = choose_letters_to_add(user.letter_limits_list, letter_difference)
-            user.add_letters(letters_to_add)
-            await update.message.reply_text(parse_lvl_up_message(letters_to_add))
-
-
-        save(user)
+    if update.message.chat.type == "private":
+        
+        if not filter_message(update.message.text, user.letter_limits_list):
+            
+            await update.message.reply_text("Tu mensaje no futela")
 
     else:
 
-        await update.message.delete()
+        if update.message.from_user.id != last_user and filter_message(update.message.text, user.letter_limits_list):
+            user.add_message()
+
+            letter_difference = max(letters_by_messages(user.messages_sent) - current_letters(user.letter_limits_list), 0)
+
+            if letter_difference:
+                letters_to_add = choose_letters_to_add(user.letter_limits_list, letter_difference)
+                user.add_letters(letters_to_add)
+                await update.message.reply_text(parse_lvl_up_message(letters_to_add))
+
+
+            save(user)
+
+            save_last_user(update.message.from_user.id)
+
+        else:
+
+            await update.message.delete()
 
 
 def get_stats(user: User):
@@ -91,11 +102,24 @@ async def stats(update: Update, context: CallbackContext):
         await update.message.reply_text("Te enviare tus stats por dm")
         await update.message.from_user.send_message(get_stats(user))
 
-    
+def load_last_user():
+    global last_user
+    try:
+        with open(LAST_USER_DATA, 'r') as file:
+            last_user = json.load(file)
+    except FileNotFoundError:
+        last_user = None
 
+def save_last_user(user_id: int):
+    global last_user
+    last_user = user_id
+    with open(LAST_USER_DATA, 'w') as file:
+        json.dump(last_user, file)
 
 def main() -> None:
+
     init_db()
+    load_last_user()
 
     application = Application.builder().token(BOT_TOKEN).build()
     
