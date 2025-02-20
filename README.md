@@ -19,3 +19,21 @@
 - El primer lootbox es de 23 caracteres.
 - Envia mensajes para ganar XP y subir de nivel.
 - Al subir de nivel recibe lootboxes de 9 caracteres.
+
+## Development
+
+Recomendable hacer un entorno virtual para instalar las dependencias.
+
+### Instalando dependencias
+
+```bash
+pip install -r /path/to/requirements.txt
+```
+
+### Agregando dependencias
+
+Instalar como siempre y luego:
+
+```bash
+pipreqs --force --encoding utf-8 --ignore .venv
+```

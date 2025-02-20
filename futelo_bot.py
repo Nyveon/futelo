@@ -1,34 +1,36 @@
 from credentials import BOT_TOKEN
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram.ext import CommandHandler, filters, MessageHandler, CallbackContext, Application
 from config import LEVELS, MIN_MESSAGES_FOR_LEVEL
 from utils import filter_message, letters_by_messages, current_letters, choose_letters_to_add, index_to_character, current_level
 from collections import Counter
 from db import init_db, load, create_user, save, User
         
-def start(update: Update, context: CallbackContext):
+async def start(update: Update, context: CallbackContext):
 
     if update.message.chat.type == "private":
-        update.message.reply_text('¡Futelo es mas divertido con amigos! ¡Agregame a un grupo!')
+        await update.message.reply_text('¡Futelo es mas divertido con amigos! ¡Agregame a un grupo!')
     else:
-        bot_member = update.message.chat.get_member(context.bot.id)
-        if not bot_member.can_delete_messages:
-            update.message.reply_text("¡Para funcionar debo poder eliminar mensajes!")
-        else:
-            update.message.chat.send_message('¡Hola gamers! Soy Futelo-Bot y vine a futelar esta conversación 😎\
-                                            Iniciando, solo pueden usar las letras "A, H, L, O" 1 vez por mensaje\
-                                            No pueden usar ninguna otra letra, pueden decir "hola" :)\
-                                            Se iran desbloqueando más letras mientras hablen\
-                                            Pueden ver las reglas por dm con el comando /reglas\
-                                            Como dijo una gran persona en algun momento: ¡A futelar!')
+        #todo: might not be necessary with latest ptb version
+        # bot_member = await update.message.chat.get_member(context.bot.id)
+        # breakpoint()
+        # if not bot_member.can_delete_messages:
+        #     await update.message.reply_text("¡Para funcionar debo poder eliminar mensajes!")
+        # else:
+        await update.message.chat.send_message('¡Hola gamers! Soy Futelo-Bot y vine a futelar esta conversación 😎\
+                                        Iniciando, solo pueden usar las letras "A, H, L, O" 1 vez por mensaje\
+                                        No pueden usar ninguna otra letra, pueden decir "hola" :)\
+                                        Se iran desbloqueando más letras mientras hablen\
+                                        Pueden ver las reglas por dm con el comando /reglas\
+                                        Como dijo una gran persona en algun momento: ¡A futelar!')
 
 
-def rules(update: Update, context: CallbackContext):
+async def rules(update: Update, context: CallbackContext):
     if update.message.chat.type == "private":
-        update.message.reply_text("WIP")
+        await update.message.reply_text("WIP")
     else:
-        update.message.reply_text("Te enviare las reglas por dm")
-        update.message.from_user.send_message("WIP")
+        await update.message.reply_text("Te enviare las reglas por dm")
+        await update.message.from_user.send_message("WIP")
     
 def parse_lvl_up_message(letters_to_add: list):
     agg_letters = Counter(letters_to_add)
@@ -38,7 +40,7 @@ def parse_lvl_up_message(letters_to_add: list):
     return message
 
 
-def new_message(update: Update, context: CallbackContext):
+async def new_message(update: Update, context: CallbackContext):
 
     user = load(update.message.from_user.id)
 
@@ -53,14 +55,14 @@ def new_message(update: Update, context: CallbackContext):
         if letter_difference:
             letters_to_add = choose_letters_to_add(user.letter_limits_list, letter_difference)
             user.add_letters(letters_to_add)
-            update.message.reply_text(parse_lvl_up_message(letters_to_add))
+            await update.message.reply_text(parse_lvl_up_message(letters_to_add))
 
 
         save(user)
 
     else:
 
-        update.message.delete()
+        await update.message.delete()
 
 
 def get_stats(user: User):
@@ -77,36 +79,32 @@ def get_stats(user: User):
     return mensaje
 
 
-def stats(update: Update, context: CallbackContext):
+async def stats(update: Update, context: CallbackContext):
     user = load(update.message.from_user.id)
 
     if not user:
         user = create_user(update.message.from_user.id)
     
     if update.message.chat.type == "private":
-        update.message.reply_text(get_stats(user))
+        await update.message.reply_text(get_stats(user))
     else:
-        update.message.reply_text("Te enviare tus stats por dm")
-        update.message.from_user.send_message(get_stats(user))
+        await update.message.reply_text("Te enviare tus stats por dm")
+        await update.message.from_user.send_message(get_stats(user))
 
     
 
 
 def main() -> None:
-
     init_db()
 
-    updater = Updater(BOT_TOKEN)
-    dispatcher = updater.dispatcher
+    application = Application.builder().token(BOT_TOKEN).build()
+    
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("reglas", rules))
+    application.add_handler(CommandHandler("stats", stats))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, new_message))
 
-    dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(CommandHandler("reglas", rules))
-    dispatcher.add_handler(CommandHandler("stats", stats))
-    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, new_message))
-
-    updater.start_polling()
-
-    updater.idle()
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
     
 
 if __name__ == '__main__':
