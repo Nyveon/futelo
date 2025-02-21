@@ -1,7 +1,7 @@
-from credentials import BOT_TOKEN
+from private_info import BOT_TOKEN, LAST_USER_DATA
 from telegram import Update
 from telegram.ext import CommandHandler, filters, MessageHandler, CallbackContext, Application
-from config import LEVELS, MIN_MESSAGES_FOR_LEVEL, LAST_USER_DATA
+from config import LEVELS, MIN_MESSAGES_FOR_LEVEL
 from utils import filter_message, letters_by_messages, current_letters, choose_letters_to_add, index_to_character, current_level
 from collections import Counter
 from db import init_db, load, create_user, save, User

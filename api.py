@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from db import load, create_user
 from utils import current_level
-from config import LEVELS, MIN_MESSAGES_FOR_LEVEL, FRONTEND_URL
+from config import LEVELS, MIN_MESSAGES_FOR_LEVEL
+from private_info import FRONTEND_URL
 
 app = FastAPI()
 

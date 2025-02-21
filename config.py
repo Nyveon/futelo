@@ -12,8 +12,6 @@ MIN_MESSAGES_FOR_LEVEL = [0, 1, 6, 16, 31, 51, 76, 106, 141, 181, 226, 276, 331,
 
 LETTERS_AT_LEVEL = [4, 29, 34, 39, 44, 49, 54, 59, 64, 69, 74, 79, 84, 89, 94, 99, 104, 109, 114, 119, 124, 129, 134, 139, 144, 149, 154, 159, 164, 169, 174]
 
-LAST_USER_DATA = 'last_user_data.json'
-
 assert len(STARTING_LETTERS.split(',')) == CHARACTER_LIMITS
 
 assert len(MIN_MESSAGES_FOR_LEVEL) == LEVELS
@@ -25,5 +23,3 @@ assert LETTERS_AT_LEVEL[-1] == CHARACTER_LIMITS * MAX_LIMIT
 assert all(MIN_MESSAGES_FOR_LEVEL[i] < MIN_MESSAGES_FOR_LEVEL[i+1] for i in range(LEVELS-1))
 
 assert all(LETTERS_AT_LEVEL[i] < LETTERS_AT_LEVEL[i+1] for i in range(LEVELS-1))
-
-FRONTEND_URL = "http://localhost:8000"
