@@ -151,6 +151,12 @@
 			template {
 				display: none;
 			}
+			.editable-section {
+				display: flex;
+				flex-direction: row;
+				align-items: center;
+				margin-bottom: 20px;
+			}
 		</style>
 
 		<style>
@@ -189,6 +195,7 @@
 				outline: none;
 				white-space: pre-wrap;
 				font-size: 1.5rem;
+				width: 100%;
 			}
 
 			ul {
@@ -309,6 +316,65 @@
 	</head>
 	<body
 		x-data="{
+		user_stats: null,
+		valid: true,
+		letter_limits: {
+            'a': 6,
+            'b': 6,
+            'c': 6,
+            'd': 6,
+            'e': 6,
+            'f': 6,
+            'g': 6,
+            'h': 6,
+            'i': 6,
+            'j': 6,
+            'k': 6,
+            'l': 6,
+            'm': 6,
+            'n': 6,
+			'ñ': 6,
+            'o': 6,
+            'p': 6,
+            'q': 6,
+            'r': 6,
+            's': 6,
+            't': 6,
+            'u': 6,
+            'v': 6,
+            'w': 6,
+            'x': 6,
+            'y': 6,
+            'z': 6,
+            '#': 6,
+            '?': 6,
+        },
+		LETTERS: 'abcdefghijklmnñopqrstuvwxyz#?',
+		mapLetterLimits(letter_limits_list){
+			this.letter_limits = {};
+			for (let i = 0; i < letter_limits_list.length; i++){
+				this.letter_limits[this.LETTERS[i]] = letter_limits_list[i];
+			}
+		},
+		getUserStats(){
+			const userId = new URLSearchParams(window.location.search).get('user_id');
+			if (userId){
+				// THIS URL HAS TO BE CHANGED
+				fetch('http://localhost:8001/stats?user_id=' + userId)
+				.then(response => response.json())
+				.then(data => {
+					if (data.error) {
+						console.error(data.error);
+						return;
+					}
+					this.user_stats = data;
+					this.mapLetterLimits(data.letter_limits_list);
+				})
+				.catch(error => console.error(error));
+			} else {
+				console.error('No user_id provided');
+			}
+		},
         categories: {
             'a': 0,
             'b': 0,
@@ -324,6 +390,7 @@
             'l': 0,
             'm': 0,
             'n': 0,
+			'ñ': 0,
             'o': 0,
             'p': 0,
             'q': 0,
@@ -339,17 +406,38 @@
             '#': 0,
             '?': 0,
         },
-        frequencyText(category, count) {
-            if (count > 6) {
-                return `${category} | ${count.toString().padEnd(6, ' ')}`;
+		categoryLimit(category){
+			return this.letter_limits[category];
+		},
+        frequencyText(category, count, limit) {
+            if (count > limit) {
+                return `${category} | ${count.toString().padEnd(limit, ' ')}`;
             }
             const bars = '■'.repeat(count);
-            const spaces = '□'.repeat(6 - count);
+            const spaces = '□'.repeat(limit - count);
             return `${category} | ${bars}${spaces}`;
         },
         normalizeText(text) {
             return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         },
+		characterCategory(char){
+			if (this.categories.hasOwnProperty(char)) {
+				return char
+			} else if (!isNaN(char)) {
+				return '#'
+				this.categories['#']++;
+			} else if (/[^a-z0-9]/.test(char)) {
+				return '?'
+			}
+		},
+		checkValid(text){
+			for (let char of text){
+				if (this.getCharClass(char) == 'tx'){
+					return false;
+				}
+			}
+			return true;
+		},
         updateCategories() {
             const originalText = this.$refs.editable.innerText
             const text = this.normalizeText(originalText);
@@ -367,16 +455,21 @@
             }
 
             this.applyColoredText(originalText);
+			this.valid = this.checkValid(text);
         },
-        getFrequencyClass(count) {
-            if (count > 6) return 'tx';
+        getFrequencyClass(category,count) {
+            if (count > this.letter_limits[category]) return 'tx';
             return `t${count}`;
         },
+		getOtherFrequencyClass(category,count) {
+			if (count > this.letter_limits[category]) return 'fx';
+			return `f${count}`;
+		},
         getCharClass(char) {
             const normalizedChar = this.normalizeText(char);
 
             let count = this.categories[normalizedChar] || (/\d/.test(char) ? this.categories['#'] : this.categories['?']);
-            return this.getFrequencyClass(count);
+            return this.getFrequencyClass(this.characterCategory(normalizedChar) , count);
         },
         applyColoredText(text) {
             const selection = window.getSelection();
@@ -426,27 +519,35 @@
             selection.removeAllRanges();
             selection.addRange(range);
         },
+		goToTelegram() {
+            const text = this.$refs.editable.innerText;
+			window.location.href = `https://t.me/share?url=${encodeURIComponent(text)}`;
+        },
     }"
+	x-init="getUserStats"
 	>
+
 		<main>
 			<h1>Futelo</h1>
 
-			<section>
+			
+			<section class="editable-section">
 				<div
 					contenteditable="true"
 					x-ref="editable"
 					@input="updateCategories"
 				></div>
+				<button style="min-height: 60px; min-width: 60px;" x-on:click="goToTelegram()" x-bind:disabled="!valid">→</button>
 			</section>
 
 			<section>
 				<ul class="inventory">
 					<template x-for="(count, category) in categories">
-						<li class="item" :class="`f${count}`">
+						<li class="item" :class="getOtherFrequencyClass(category, count)">
 							<pre
 								class="freq"
-								:class="(count > 6) && 'fx'"
-								x-text="frequencyText(category, count)"
+								:class="(count > categoryLimit(category)) && 'fx'"
+								x-text="frequencyText(category, count, categoryLimit(category))"
 							></pre>
 						</li>
 					</template>
