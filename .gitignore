@@ -175,5 +175,5 @@ cython_debug/
 
 
 # Custom
-credentials.py
+private_info.py
 *.db
