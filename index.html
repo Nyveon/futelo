@@ -527,7 +527,7 @@
         },
 		goToTelegram() {
             const text = this.$refs.editable.innerText;
-			window.location.href = `https://t.me/share?url=${encodeURIComponent(text)}`;
+			window.location.href = `https://t.me/share/url?url=${encodeURIComponent(text)}`;
         },
     }"
 	x-init="getUserStats"
