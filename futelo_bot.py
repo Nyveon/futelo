@@ -1,5 +1,5 @@
-from private_info import BOT_TOKEN, LAST_USER_DATA
-from telegram import Update
+from private_info import BOT_TOKEN, LAST_USER_DATA, MINI_APP_LINK
+from telegram import Update, InlineKeyboardButton, WebAppInfo, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import CommandHandler, filters, MessageHandler, CallbackContext, Application
 from config import LEVELS, MIN_MESSAGES_FOR_LEVEL
 from utils import filter_message, letters_by_messages, current_letters, choose_letters_to_add, index_to_character, current_level
@@ -23,7 +23,12 @@ async def start(update: Update, context: CallbackContext):
                                         No pueden usar ninguna otra letra, pueden decir "hola" :)\
                                         Se iran desbloqueando más letras mientras hablen\
                                         Pueden ver las reglas por dm con el comando /reglas\
-                                        Como dijo una gran persona en algun momento: ¡A futelar!')
+                                        Como dijo una gran persona en algun momento: ¡A futelar!'
+        )
+        mini_app_message = await update.message.chat.send_message(f'Revisa tu mensaje antes de enviarlo con la mini app\
+                                                                  {MINI_APP_LINK}')
+
+        await mini_app_message.pin()
 
 
 async def rules(update: Update, context: CallbackContext):
