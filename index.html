@@ -357,7 +357,10 @@
 			}
 		},
 		getUserStats(){
-			const userId = new URLSearchParams(window.location.search).get('user_id');
+			var userId = new URLSearchParams(window.location.search).get('user_id');
+			if ( (!userId) && (window.Telegram.WebApp.initDataUnsafe.user) ){
+				userId = window.Telegram.WebApp.initDataUnsafe.user.id;
+			}
 			if (userId){
 				// THIS URL HAS TO BE CHANGED
 				fetch('http://localhost:8001/stats?user_id=' + userId)
@@ -371,8 +374,6 @@
 					this.mapLetterLimits(data.letter_limits_list);
 				})
 				.catch(error => console.error(error));
-			} else {
-				console.error('No user_id provided');
 			}
 		},
         categories: {
