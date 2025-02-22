@@ -424,7 +424,7 @@
             return `${category} | ${bars}${spaces}`;
         },
         normalizeText(text) {
-            return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            return text.toLowerCase().replaceAll('ñ','\001').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replaceAll('\001','ñ');
         },
 		characterCategory(char){
 			if (this.categories.hasOwnProperty(char)) {

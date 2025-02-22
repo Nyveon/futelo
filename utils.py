@@ -25,6 +25,8 @@ def index_to_character(index: int) -> str:
 
 def letters_used(message: str) -> list:
     used_letters = [ 0 for _ in range(CHARACTER_LIMITS) ]
+    used_letters[character_to_index("Ñ")] = message.upper().count("Ñ")
+    message = message.replace("Ñ", "").replace("ñ", "")
     message = unidecode(message).upper()
     for letter in message:
         letter_index = character_to_index(letter)
