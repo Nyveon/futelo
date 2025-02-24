@@ -1,24 +1,23 @@
 # Futelegram
 
-## Futeba
+## Futelo
 
-- Un Futeba es un mensaje con maximo 6 de cada letra.
+- Un Futelo es un mensaje con maximo 6 de cada letra.
 - Promueve creatividad a traves de la limitacion, ¿eh?
 - La cantidad de digitos (0 a 9) no debe superar 6.
 - Los      espacios      son     ilimitados,      aprovechalos      .
 - ¡Hay un maximo de 6 simbolos! (que no es digito/letra/espacio)
 
 
-## Futebini
+## Futelini
 
-- Futebini = Futeba pero gamer, con inventario, progresion y mas.
+- Futelini = Futelo pero gamer, con inventario, progresion y mas.
 - Cada jugador tiene su inventario que limita sus mensajes 😳
 - Se parte con cuatro letras: H, O, L, A.
-- ¡Tras tu primer mensaje recibes tu primera lootbox!
-- Un lootbox suma caracteres sorpresa a tu inventario.
-- El primer lootbox es de 23 caracteres.
-- Envia mensajes para ganar XP y subir de nivel.
-- Al subir de nivel recibe lootboxes de 9 caracteres.
+- Consigues nuevas letras subiendo de nivel
+- La primera vez consigues 25 letras, las siguientes 5
+- ¡Subir de nivel es cada vez mas dificil!
+- Primero subes mandando 1 mensaje, luego mandando 2, luego 3, y así...
 
 ## Development
 
@@ -37,3 +36,13 @@ Instalar como siempre y luego:
 ```bash
 pipreqs --force --encoding utf-8 --ignore .venv
 ```
+
+## Correr el bot
+
+El bot tiene tres partes: el bot, la api y la mini app.
+
+Para correr el bot solo es necesario dejar corriendo el archivo en python: `python futelo_boy.py`
+
+Para correr la api, usamos fast api: `uvicorn api:app --reload`
+
+Para la mini app solo es necesario hostear la página index.html.

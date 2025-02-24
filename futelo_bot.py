@@ -32,11 +32,18 @@ async def start(update: Update, context: CallbackContext):
 
 
 async def rules(update: Update, context: CallbackContext):
+    REGLAS = "Futelini = Futelo pero gamer, con inventario, progresion y mas.\
+            Cada jugador tiene su inventario que limita sus mensajes 😳\
+            Se parte con cuatro letras: H, O, L, A.\
+            Consigues nuevas letras subiendo de nivel\
+            La primera vez consigues 25 letras, las siguientes 5\
+            ¡Subir de nivel es cada vez mas dificil!\
+            Primero subes mandando 1 mensaje, luego mandando 2, luego 3, y así..."
     if update.message.chat.type == "private":
-        await update.message.reply_text("WIP")
+        await update.message.reply_text(REGLAS)
     else:
         await update.message.reply_text("Te enviare las reglas por dm")
-        await update.message.from_user.send_message("WIP")
+        await update.message.from_user.send_message(REGLAS)
     
 def parse_lvl_up_message(letters_to_add: list):
     agg_letters = Counter(letters_to_add)
