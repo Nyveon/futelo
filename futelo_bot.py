@@ -1,5 +1,5 @@
 from private_info import BOT_TOKEN, LAST_USER_DATA, MINI_APP_LINK
-from telegram import Update, InlineKeyboardButton, WebAppInfo, ReplyKeyboardMarkup, KeyboardButton
+from telegram import Update
 from telegram.ext import CommandHandler, filters, MessageHandler, CallbackContext, Application
 from config import LEVELS, MIN_MESSAGES_FOR_LEVEL
 from utils import filter_message, letters_by_messages, current_letters, choose_letters_to_add, index_to_character, current_level
@@ -32,15 +32,17 @@ async def start(update: Update, context: CallbackContext):
 
 
 async def rules(update: Update, context: CallbackContext):
-    REGLAS = "Futelini = Futelo pero gamer, con inventario, progresion y mas.\
-            Cada jugador tiene su inventario que limita sus mensajes 😳\
-            Se parte con cuatro letras: H, O, L, A.\
-            Consigues nuevas letras subiendo de nivel\
-            La primera vez consigues 25 letras, las siguientes 5\
-            ¡Subir de nivel es cada vez mas dificil!\
-            Primero subes mandando 1 mensaje, luego mandando 2, luego 3, y así..."
+    REGLAS = ("Futelini \\= Futelo pero gamer, con inventario, progresion y mas\\.\n"
+            "\\- Cada jugador tiene su inventario que limita sus mensajes 😳\n"
+            "\\- Se parte con cuatro letras: H, O, L, A\\.\n"
+            "\\- Consigues nuevas letras subiendo de nivel\n"
+            "\\- La primera vez consigues 25 letras, las siguientes 5\n"
+            "\\- ¡Subir de nivel es cada vez mas dificil\\!\n"
+            "\\- Primero subes mandando 1 mensaje, luego mandando 2, luego 3, y así\\.\\.\\.\n"
+            "\\- Ojo que no puedes mandar mensajes consecutivos\\!"
+            )
     if update.message.chat.type == "private":
-        await update.message.reply_text(REGLAS)
+        await update.message.reply_text(REGLAS, parse_mode="MarkdownV2")
     else:
         await update.message.reply_text("Te enviare las reglas por dm")
         await update.message.from_user.send_message(REGLAS)
