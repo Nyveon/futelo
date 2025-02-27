@@ -1,4 +1,8 @@
+import Alpine from 'alpinejs'
 import './css/style.css'
+ 
+window.Alpine = Alpine
+Alpine.start()
 
 const userId = "1" 
 

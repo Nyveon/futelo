@@ -13,6 +13,8 @@
     "vite": "^6.2.0"
   },
   "dependencies": {
-    "@vitejs/plugin-basic-ssl": "^1.2.0"
+    "@types/alpinejs": "^3.13.11",
+    "@vitejs/plugin-basic-ssl": "^1.2.0",
+    "alpinejs": "^3.14.8"
   }
 }
