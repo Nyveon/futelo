@@ -1,318 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<script src="https://telegram.org/js/telegram-web-app.js?56"></script>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Futelo</title>
+
+		<link rel="stylesheet" href="normalize.css" />
+		<link rel="stylesheet" href="styles.css" />
+
+		<script src="https://telegram.org/js/telegram-web-app.js?56"></script>
 		<script
 			defer
 			src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
 		></script>
-
-		<style>
-			/*! normalize.css v8.0.1 | MIT License | github.com/necolas/normalize.css */
-			button,
-			hr,
-			input {
-				overflow: visible;
-			}
-			progress,
-			sub,
-			sup {
-				vertical-align: baseline;
-			}
-			[type="checkbox"],
-			[type="radio"],
-			legend {
-				box-sizing: border-box;
-				padding: 0;
-			}
-			html {
-				line-height: 1.15;
-				-webkit-text-size-adjust: 100%;
-			}
-			body {
-				margin: 0;
-			}
-			details,
-			main {
-				display: block;
-			}
-			h1 {
-				font-size: 2em;
-				margin: 0.67em 0;
-			}
-			hr {
-				box-sizing: content-box;
-				height: 0;
-			}
-			code,
-			kbd,
-			pre,
-			samp {
-				font-family: monospace, monospace;
-				font-size: 1em;
-			}
-			a {
-				background-color: transparent;
-			}
-			abbr[title] {
-				border-bottom: none;
-				text-decoration: underline;
-				text-decoration: underline dotted;
-			}
-			b,
-			strong {
-				font-weight: bolder;
-			}
-			small {
-				font-size: 80%;
-			}
-			sub,
-			sup {
-				font-size: 75%;
-				line-height: 0;
-				position: relative;
-			}
-			sub {
-				bottom: -0.25em;
-			}
-			sup {
-				top: -0.5em;
-			}
-			img {
-				border-style: none;
-			}
-			button,
-			input,
-			optgroup,
-			select,
-			textarea {
-				font-family: inherit;
-				font-size: 100%;
-				line-height: 1.15;
-				margin: 0;
-			}
-			button,
-			select {
-				text-transform: none;
-			}
-			[type="button"],
-			[type="reset"],
-			[type="submit"],
-			button {
-				-webkit-appearance: button;
-			}
-			[type="button"]::-moz-focus-inner,
-			[type="reset"]::-moz-focus-inner,
-			[type="submit"]::-moz-focus-inner,
-			button::-moz-focus-inner {
-				border-style: none;
-				padding: 0;
-			}
-			[type="button"]:-moz-focusring,
-			[type="reset"]:-moz-focusring,
-			[type="submit"]:-moz-focusring,
-			button:-moz-focusring {
-				outline: ButtonText dotted 1px;
-			}
-			fieldset {
-				padding: 0.35em 0.75em 0.625em;
-			}
-			legend {
-				color: inherit;
-				display: table;
-				max-width: 100%;
-				white-space: normal;
-			}
-			textarea {
-				overflow: auto;
-			}
-			[type="number"]::-webkit-inner-spin-button,
-			[type="number"]::-webkit-outer-spin-button {
-				height: auto;
-			}
-			[type="search"] {
-				-webkit-appearance: textfield;
-				outline-offset: -2px;
-			}
-			[type="search"]::-webkit-search-decoration {
-				-webkit-appearance: none;
-			}
-			::-webkit-file-upload-button {
-				-webkit-appearance: button;
-				font: inherit;
-			}
-			summary {
-				display: list-item;
-			}
-			[hidden],
-			template {
-				display: none;
-			}
-			.editable-section {
-				display: flex;
-				flex-direction: row;
-				align-items: center;
-				margin-bottom: 20px;
-			}
-		</style>
-
-		<style>
-			:root {
-				--color-background: #333;
-				--color-background-light: #444;
-				--color-background-dark: #222;
-				--color-text: #f5f5f5;
-				--color-primary: #24a1de;
-				--color-warn: oklch(70% 0.15 21);
-				--color-warn-dark: oklch(50% 0.1 20);
-			}
-
-			body {
-				background-color: var(--color-background);
-				color: var(--color-text);
-				font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-					"Helvetica Neue", Arial, sans-serif;
-			}
-
-			main {
-				max-width: 900px;
-				margin: 0 auto;
-				padding: 20px;
-			}
-
-			h1,
-			h2 {
-				text-align: center;
-			}
-
-			div[contenteditable="true"] {
-				border: 1px solid #ccc;
-				padding: 8px;
-				min-height: 40px;
-				outline: none;
-				white-space: pre-wrap;
-				font-size: 1.5rem;
-				width: 100%;
-			}
-
-			ul {
-				list-style-type: none;
-				padding: 0;
-			}
-
-			.inventory {
-				display: grid;
-				grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-				gap: 10px;
-			}
-
-			.item {
-				display: flex;
-				justify-content: space-around;
-				background-color: var(--color-background-dark);
-				border-radius: 5px;
-				padding-inline: 5px;
-				padding-block: 2px;
-			}
-
-			pre {
-				margin: 0.25rem;
-				font-family: "Courier New", Courier, monospace;
-			}
-
-			.freq {
-				color: var(--color-text);
-			}
-
-			.f0 {
-				background-color: var(--color-background-light);
-			}
-
-			.f1 {
-				background-color: oklch(70% 0.1197 270);
-			}
-
-			.f2 {
-				background-color: oklch(70% 0.1197 230);
-			}
-
-			.f3 {
-				background-color: oklch(70% 0.1197 190);
-			}
-
-			.f4 {
-				background-color: oklch(70% 0.1197 150);
-			}
-
-			.f5 {
-				background-color: oklch(70% 0.1197 110);
-			}
-
-			.f6 {
-				background-color: oklch(70% 0.1197 70);
-			}
-
-			.fx {
-				color: var(--color-warn);
-			}
-
-			.t0 {
-				color: var(--color-text);
-			}
-
-			.t1 {
-				color: oklch(70% 0.1197 270);
-			}
-
-			.t2 {
-				color: oklch(70% 0.1197 230);
-			}
-
-			.t3 {
-				color: oklch(70% 0.1197 190);
-			}
-
-			.t4 {
-				color: oklch(70% 0.1197 150);
-			}
-
-			.t5 {
-				color: oklch(70% 0.1197 110);
-			}
-
-			.t6 {
-				color: oklch(70% 0.1197 70);
-			}
-
-			.tx {
-				color: var(--color-warn);
-			}
-
-			body:has(.fx) div[contenteditable="true"] {
-				background-color: var(--color-warn-dark);
-			}
-
-			@media screen and (max-width: 600px) {
-				h1 {
-					padding-top: 0;
-				}
-
-				main {
-					padding-top: 0;
-				}
-
-				ul.inventory {
-					gap: 5px;
-				}
-
-				pre {
-					margin: 0.1rem;
-				}
-			}
-		</style>
 	</head>
 	<body
 		x-data="{
@@ -530,20 +230,24 @@
 			window.location.href = `https://t.me/share/url?url=${encodeURIComponent(text)}`;
         },
     }"
-	x-init="getUserStats"
+		x-init="getUserStats"
 	>
-
 		<main>
 			<h1>Futelo</h1>
 
-			
 			<section class="editable-section">
 				<div
 					contenteditable="true"
 					x-ref="editable"
 					@input="updateCategories"
 				></div>
-				<button style="min-height: 60px; min-width: 60px;" x-on:click="goToTelegram()" x-bind:disabled="!valid">→</button>
+				<button
+					style="min-height: 60px; min-width: 60px"
+					x-on:click="goToTelegram()"
+					x-bind:disabled="!valid"
+				>
+					→
+				</button>
 			</section>
 
 			<section>
