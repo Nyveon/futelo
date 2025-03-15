@@ -2,46 +2,14 @@
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
-		<link rel="icon" type="image/svg+xml" href="/vite.svg" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Futelo</title>
+
+        <script src="/telegram-web-app.min.js"></script>
 	</head>
 	<body
 		x-data="{
-    user_stats: null,
-    valid: true,
-    letter_limits: {
-        'a': 6,
-        'b': 6,
-        'c': 6,
-        'd': 6,
-        'e': 6,
-        'f': 6,
-        'g': 6,
-        'h': 6,
-        'i': 6,
-        'j': 6,
-        'k': 6,
-        'l': 6,
-        'm': 6,
-        'n': 6,
-        'ñ': 6,
-        'o': 6,
-        'p': 6,
-        'q': 6,
-        'r': 6,
-        's': 6,
-        't': 6,
-        'u': 6,
-        'v': 6,
-        'w': 6,
-        'x': 6,
-        'y': 6,
-        'z': 6,
-        '#': 6,
-        '?': 6,
-    },
-    LETTERS: 'abcdefghijklmnñopqrstuvwxyz#?',
+    ...gameState(),
     mapLetterLimits(letter_limits_list){
         this.letter_limits = {};
         for (let i = 0; i < letter_limits_list.length; i++){
@@ -49,13 +17,14 @@
         }
     },
     getUserStats(){
-        var userId = new URLSearchParams(window.location.search).get('user_id');
+        var userId = '748207556' // new URLSearchParams(window.location.search).get('user_id');
+        const apiUrl = 'http://localhost:8000/stats?user_id=' // 'https://71c8-164-92-91-99.ngrok-free.app/stats?user_id='
         if ( (!userId) && (window.Telegram.WebApp.initDataUnsafe.user) ){
             userId = window.Telegram.WebApp.initDataUnsafe.user.id;
         }
         if (userId){
             // THIS URL HAS TO BE CHANGED
-            fetch('https://71c8-164-92-91-99.ngrok-free.app/stats?user_id=' + userId,{
+            fetch(apiUrl + userId,{
                 method: 'GET',
                 headers: {
                     'ngrok-skip-browser-warning': 'truuu',
@@ -72,37 +41,6 @@
             })
             .catch(error => console.error(error));
         }
-    },
-    categories: {
-        'a': 0,
-        'b': 0,
-        'c': 0,
-        'd': 0,
-        'e': 0,
-        'f': 0,
-        'g': 0,
-        'h': 0,
-        'i': 0,
-        'j': 0,
-        'k': 0,
-        'l': 0,
-        'm': 0,
-        'n': 0,
-        'ñ': 0,
-        'o': 0,
-        'p': 0,
-        'q': 0,
-        'r': 0,
-        's': 0,
-        't': 0,
-        'u': 0,
-        'v': 0,
-        'w': 0,
-        'x': 0,
-        'y': 0,
-        'z': 0,
-        '#': 0,
-        '?': 0,
     },
     categoryLimit(category){
         return this.letter_limits[category];

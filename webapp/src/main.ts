@@ -1,8 +1,10 @@
 import "./css/style.css";
 import "./css/normalize.css";
 import Alpine from "alpinejs";
+import { gameState } from "./ts/app";
 
 window.Alpine = Alpine;
+Alpine.data('gameState', gameState)
 Alpine.start();
 
 // const userId = "1";

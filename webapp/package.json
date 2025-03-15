@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@types/alpinejs": "^3.13.11",
+    "@types/telegram-web-app": "^7.10.1",
     "@vitejs/plugin-basic-ssl": "^1.2.0",
     "alpinejs": "^3.14.8"
   }
