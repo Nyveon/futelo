@@ -83,8 +83,10 @@
 }"
 		x-init="
             async () => {
-                const letterLimits = await telegram.getUserStats();
-                mapLetterLimits(letterLimits);
+                const userData = await telegram.getUserStats();
+                mapLetterLimits(userData.letterLimits);
+                level = userData.level;
+                msgLeft = userData.msgLeft;
             }
         "
 	>
@@ -98,13 +100,24 @@
 					@input="updateCategories"
 				></div>
 				<button
-					style="min-height: 60px; min-width: 60px"
 					x-on:click="telegram.share($refs.editable.innerText)"
 					x-bind:disabled="!valid"
 				>
 					→
 				</button>
 			</section>
+
+            <template x-if="level != -1">
+				<div id="user-state">
+					<b>LVL: <span x-text="level"></span></b>
+					<i
+						>(<span
+							x-text="`${msgLeft} futelo${msgLeft > 1 ? 's' : ''}`"
+						></span>
+						más para subir)</i
+					>
+                </div>
+			</template>
 
 			<section>
 				<ul class="inventory">

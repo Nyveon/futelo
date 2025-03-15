@@ -155,5 +155,18 @@ body:has(.fx) div[contenteditable="true"] {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	margin-bottom: 20px;
+	margin-bottom: 0.25rem;
+}
+
+.editable-section button {
+    min-height: 60px;
+    min-width: 60px
+}
+
+#user-state {
+	text-align: center;
+	display: flex;
+	gap: 1rem;
+	justify-content: space-between;
+	margin-bottom: 1rem;
 }

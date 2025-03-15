@@ -22,6 +22,8 @@ interface GameState {
 	valid: boolean;
 	letterLimits: Record<category, number>;
 	categories: Record<category, number>;
+	level: number;
+	msgLeft: number;
 }
 
 export function Game() {
@@ -33,6 +35,8 @@ export function Game() {
 		categories: Object.fromEntries(
 			LETTERS.map((letter) => [letter, 0])
 		) as Record<category, number>,
+		level: -1,
+		msgLeft: -1,
 	};
 
 	console.log(state.categories);
