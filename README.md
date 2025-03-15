@@ -37,7 +37,7 @@ Instalar como siempre y luego:
 pipreqs --force --encoding utf-8 --ignore .venv
 ```
 
-## Correr el bot
+## Telegram Bot
 
 El bot tiene tres partes: el bot, la api y la mini app.
 
@@ -45,4 +45,11 @@ Para correr el bot solo es necesario dejar corriendo el archivo en python: `pyth
 
 Para correr la api, usamos fast api: `uvicorn api:app --reload`
 
-Para la mini app solo es necesario hostear la página index.html.
+Para la mini app, se debe hacer el bundle de frontend con:
+
+```bash
+cd webapp
+npm run build
+```
+
+Esto creará una carpeta estática `webapp/dist` para hostearse.

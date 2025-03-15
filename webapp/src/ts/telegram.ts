@@ -7,12 +7,11 @@ export function Telegram() {
 		},
 
 		async getUserStats() {
-			//todo: no more hardcoded userId and change backend URL
-			let userId = 748207556; // new URLSearchParams(window.location.search).get('user_id');
+			let userId = new URLSearchParams(window.location.search).get('user_id');
 			const apiUrl = "http://127.0.0.1:8000/stats?user_id=";
 
 			if (!userId && window.Telegram.WebApp.initDataUnsafe.user) {
-				userId = window.Telegram.WebApp.initDataUnsafe.user.id;
+				userId = window.Telegram.WebApp.initDataUnsafe.user.id.toString();
 			}
 
 			if (userId) {
