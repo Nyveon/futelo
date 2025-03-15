@@ -1,159 +1,159 @@
 :root {
-    --color-background: #333;
-    --color-background-light: #444;
-    --color-background-dark: #222;
-    --color-text: #f5f5f5;
-    --color-primary: #24a1de;
-    --color-warn: oklch(70% 0.15 21);
-    --color-warn-dark: oklch(50% 0.1 20);
+	--color-background: #333;
+	--color-background-light: #444;
+	--color-background-dark: #222;
+	--color-text: #f5f5f5;
+	--color-primary: #24a1de;
+	--color-warn: oklch(70% 0.15 21);
+	--color-warn-dark: oklch(50% 0.1 20);
 }
 
 body {
-    background-color: var(--color-background);
-    color: var(--color-text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-        "Helvetica Neue", Arial, sans-serif;
+	background-color: var(--color-background);
+	color: var(--color-text);
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+		"Helvetica Neue", Arial, sans-serif;
 }
 
 main {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 20px;
+	max-width: 900px;
+	margin: 0 auto;
+	padding: 20px;
 }
 
 h1,
 h2 {
-    text-align: center;
+	text-align: center;
 }
 
 div[contenteditable="true"] {
-    border: 1px solid #ccc;
-    padding: 8px;
-    min-height: 40px;
-    outline: none;
-    white-space: pre-wrap;
-    font-size: 1.5rem;
-    width: 100%;
+	border: 1px solid #ccc;
+	padding: 8px;
+	min-height: 40px;
+	outline: none;
+	white-space: pre-wrap;
+	font-size: 1.5rem;
+	width: 100%;
 }
 
 ul {
-    list-style-type: none;
-    padding: 0;
+	list-style-type: none;
+	padding: 0;
 }
 
 .inventory {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-    gap: 10px;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+	gap: 10px;
 }
 
 .item {
-    display: flex;
-    justify-content: space-around;
-    background-color: var(--color-background-dark);
-    border-radius: 5px;
-    padding-inline: 5px;
-    padding-block: 2px;
+	display: flex;
+	justify-content: space-around;
+	background-color: var(--color-background-dark);
+	border-radius: 5px;
+	padding-inline: 5px;
+	padding-block: 2px;
 }
 
 pre {
-    margin: 0.25rem;
-    font-family: "Courier New", Courier, monospace;
+	margin: 0.25rem;
+	font-family: "Courier New", Courier, monospace;
 }
 
 .freq {
-    color: var(--color-text);
+	color: var(--color-text);
 }
 
 .f0 {
-    background-color: var(--color-background-light);
+	background-color: var(--color-background-light);
 }
 
 .f1 {
-    background-color: oklch(70% 0.1197 270);
+	background-color: oklch(70% 0.1197 270);
 }
 
 .f2 {
-    background-color: oklch(70% 0.1197 230);
+	background-color: oklch(70% 0.1197 230);
 }
 
 .f3 {
-    background-color: oklch(70% 0.1197 190);
+	background-color: oklch(70% 0.1197 190);
 }
 
 .f4 {
-    background-color: oklch(70% 0.1197 150);
+	background-color: oklch(70% 0.1197 150);
 }
 
 .f5 {
-    background-color: oklch(70% 0.1197 110);
+	background-color: oklch(70% 0.1197 110);
 }
 
 .f6 {
-    background-color: oklch(70% 0.1197 70);
+	background-color: oklch(70% 0.1197 70);
 }
 
 .fx {
-    color: var(--color-warn);
+	color: var(--color-warn);
 }
 
 .t0 {
-    color: var(--color-text);
+	color: var(--color-text);
 }
 
 .t1 {
-    color: oklch(70% 0.1197 270);
+	color: oklch(70% 0.1197 270);
 }
 
 .t2 {
-    color: oklch(70% 0.1197 230);
+	color: oklch(70% 0.1197 230);
 }
 
 .t3 {
-    color: oklch(70% 0.1197 190);
+	color: oklch(70% 0.1197 190);
 }
 
 .t4 {
-    color: oklch(70% 0.1197 150);
+	color: oklch(70% 0.1197 150);
 }
 
 .t5 {
-    color: oklch(70% 0.1197 110);
+	color: oklch(70% 0.1197 110);
 }
 
 .t6 {
-    color: oklch(70% 0.1197 70);
+	color: oklch(70% 0.1197 70);
 }
 
 .tx {
-    color: var(--color-warn);
+	color: var(--color-warn);
 }
 
 body:has(.fx) div[contenteditable="true"] {
-    background-color: var(--color-warn-dark);
+	background-color: var(--color-warn-dark);
 }
 
 @media screen and (max-width: 600px) {
-    h1 {
-        padding-top: 0;
-    }
+	h1 {
+		padding-top: 0;
+	}
 
-    main {
-        padding-top: 0;
-    }
+	main {
+		padding-top: 0;
+	}
 
-    ul.inventory {
-        gap: 5px;
-    }
+	ul.inventory {
+		gap: 5px;
+	}
 
-    pre {
-        margin: 0.1rem;
-    }
+	pre {
+		margin: 0.1rem;
+	}
 }
 
 .editable-section {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    margin-bottom: 20px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	margin-bottom: 20px;
 }

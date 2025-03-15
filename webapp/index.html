@@ -5,75 +5,13 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Futelo</title>
 
-        <script src="/telegram-web-app.min.js"></script>
+		<script src="/telegram-web-app.min.js"></script>
 	</head>
 	<body
 		x-data="{
-    ...gameState(),
-    mapLetterLimits(letter_limits_list){
-        this.letter_limits = {};
-        for (let i = 0; i < letter_limits_list.length; i++){
-            this.letter_limits[this.LETTERS[i]] = letter_limits_list[i];
-        }
-    },
-    getUserStats(){
-        var userId = '748207556' // new URLSearchParams(window.location.search).get('user_id');
-        const apiUrl = 'http://localhost:8000/stats?user_id=' // 'https://71c8-164-92-91-99.ngrok-free.app/stats?user_id='
-        if ( (!userId) && (window.Telegram.WebApp.initDataUnsafe.user) ){
-            userId = window.Telegram.WebApp.initDataUnsafe.user.id;
-        }
-        if (userId){
-            // THIS URL HAS TO BE CHANGED
-            fetch(apiUrl + userId,{
-                method: 'GET',
-                headers: {
-                    'ngrok-skip-browser-warning': 'truuu',
-                },
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    console.error(data.error);
-                    return;
-                }
-                this.user_stats = data;
-                this.mapLetterLimits(data.letter_limits_list);
-            })
-            .catch(error => console.error(error));
-        }
-    },
-    categoryLimit(category){
-        return this.letter_limits[category];
-    },
-    frequencyText(category, count, limit) {
-        if (count > limit) {
-            return `${category} | ${count.toString().padEnd(limit, ' ')}`;
-        }
-        const bars = '■'.repeat(count);
-        const spaces = '□'.repeat(limit - count);
-        return `${category} | ${bars}${spaces}`;
-    },
-    normalizeText(text) {
-        return text.toLowerCase().replaceAll('ñ','\001').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replaceAll('\001','ñ');
-    },
-    characterCategory(char){
-        if (this.categories.hasOwnProperty(char)) {
-            return char
-        } else if (!isNaN(char)) {
-            return '#'
-            this.categories['#']++;
-        } else if (/[^a-z0-9]/.test(char)) {
-            return '?'
-        }
-    },
-    checkValid(text){
-        for (let char of text){
-            if (this.getCharClass(char) == 'tx'){
-                return false;
-            }
-        }
-        return true;
-    },
+    ...Game(),
+    telegram: Telegram(),
+
     updateCategories() {
         const originalText = this.$refs.editable.innerText
         const text = this.normalizeText(originalText);
@@ -93,20 +31,7 @@
         this.applyColoredText(originalText);
         this.valid = this.checkValid(text);
     },
-    getFrequencyClass(category,count) {
-        if (count > this.letter_limits[category]) return 'tx';
-        return `t${count}`;
-    },
-    getOtherFrequencyClass(category,count) {
-        if (count > this.letter_limits[category]) return 'fx';
-        return `f${count}`;
-    },
-    getCharClass(char) {
-        const normalizedChar = this.normalizeText(char);
 
-        let count = this.categories[normalizedChar] || (/\d/.test(char) ? this.categories['#'] : this.categories['?']);
-        return this.getFrequencyClass(this.characterCategory(normalizedChar) , count);
-    },
     applyColoredText(text) {
         const selection = window.getSelection();
         const range = selection.getRangeAt(0);
@@ -154,13 +79,14 @@
         }
         selection.removeAllRanges();
         selection.addRange(range);
-    },
-    goToTelegram() {
-        const text = this.$refs.editable.innerText;
-        window.location.href = `https://t.me/share/url?url=${encodeURIComponent(text)}`;
-    },
+    }
 }"
-		x-init="getUserStats"
+		x-init="
+            async () => {
+                const letterLimits = await telegram.getUserStats();
+                mapLetterLimits(letterLimits);
+            }
+        "
 	>
 		<main>
 			<h1>Futelo</h1>
@@ -173,7 +99,7 @@
 				></div>
 				<button
 					style="min-height: 60px; min-width: 60px"
-					x-on:click="goToTelegram()"
+					x-on:click="telegram.share($refs.editable.innerText)"
 					x-bind:disabled="!valid"
 				>
 					→
@@ -183,7 +109,10 @@
 			<section>
 				<ul class="inventory">
 					<template x-for="(count, category) in categories">
-						<li class="item" :class="getOtherFrequencyClass(category, count)">
+						<li
+							class="item"
+							:class="getOtherFrequencyClass(category, count)"
+						>
 							<pre
 								class="freq"
 								:class="(count > categoryLimit(category)) && 'fx'"
