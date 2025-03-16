@@ -8,7 +8,7 @@ export function Telegram() {
 
 		async getUserStats() {
 			let userId = new URLSearchParams(window.location.search).get('user_id');
-			const apiUrl = "http://127.0.0.1:8000/stats?user_id=";
+			const apiUrl = "https://api.b4ez.com/futelo/stats?user_id=";
 
 			if (!userId && window.Telegram.WebApp.initDataUnsafe.user) {
 				userId = window.Telegram.WebApp.initDataUnsafe.user.id.toString();
