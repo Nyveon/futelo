@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from database import engine # Import engine if needed elsewhere
 from api_routes import router as api_router # Import the router from api_routes.py
 
@@ -8,10 +9,7 @@ app = FastAPI(title="Telegram Bot Backend API")
 # Include the API routes defined in api_routes.py
 app.include_router(api_router, prefix="/api") # Prefix all these routes with /api
 
-# Basic root endpoint
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to the Telegram Bot Backend API!"}
+app.mount("/", StaticFiles(directory="static/webapp/dist", html=True), name="static")
 
 # Add other middleware, configurations etc. here if needed
 
