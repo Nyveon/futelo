@@ -7,7 +7,7 @@ import crud # Import CRUD functions
 from models import (
     UserRead, MessageProcessRequest, ProcessResponse, LootboxBuyRequest, LootboxBuyResponse
 )
-from utils import check_letter_limits, calculate_consecutive_messages
+from utils import check_letter_limits, check_user_concurrent_message_count
 
 # Create an API router
 router = APIRouter()
@@ -31,7 +31,7 @@ def process_message(request: MessageProcessRequest, session: Session = Depends(g
     
     last_user_message = crud.get_or_create_last_user_message(session, request.telegram_group_id)
 
-    is_valid_consecutive, reason, needed_currency = calculate_consecutive_messages(user, last_user_message)
+    is_valid_consecutive, reason, needed_currency = check_user_concurrent_message_count(user, last_user_message)
     if not is_valid_consecutive:
         return ProcessResponse(
             success=False,
