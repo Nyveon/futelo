@@ -5,74 +5,13 @@ import random
 from database import get_session
 import crud # Import CRUD functions
 from models import (
-    UserRead, MessageValidateRequest, ValidationResponse,
+    UserRead,
     MessageProcessRequest, ProcessResponse, LootboxBuyRequest, LootboxBuyResponse
 )
-import logic # Would contain functions like check_letter_limits, calculate_spam_consequence etc. if you created logic.py
-
+from utils import check_letter_limits
 
 # Create an API router
 router = APIRouter()
-
-# --- User Endpoints ---
-
-@router.get("/users/{telegram_user_id}", response_model=UserRead)
-def read_user_status(telegram_user_id: int, session: Session = Depends(get_session)):
-    """
-    Get the current status (currency, limits) of a user.
-    Creates the user with defaults if they don't exist.
-    """
-    db_user = crud.get_or_create_user(session=session, telegram_user_id=telegram_user_id)
-    # Manually construct UserRead to use the property
-    user_data = UserRead(
-        telegram_user_id=db_user.telegram_user_id,
-        currency_balance=db_user.currency_balance,
-        letter_limits=db_user.letter_limits, # Access the property here
-        total_valid_messages_sent=db_user.total_valid_messages_sent,
-        last_message_timestamp=db_user.last_message_timestamp,
-        consecutive_message_count=db_user.consecutive_message_count
-    )
-    return user_data
-
-# --- Message Endpoints ---
-
-@router.post("/messages/validate", response_model=ValidationResponse)
-def validate_message(request: MessageValidateRequest, session: Session = Depends(get_session)):
-    """
-    Checks if a message is valid based on letter limits and potential spam cost.
-    Does NOT modify user state.
-    """
-    user = crud.get_or_create_user(session, request.telegram_user_id)
-
-    # 1. Check letter limits
-    is_valid_letters, reason, counts = crud.check_letter_limits(request.text, user.letter_limits)
-    if not is_valid_letters:
-        return ValidationResponse(is_valid=False, reason=reason, letter_counts=counts)
-
-    # 2. Check potential spam cost
-    # Simulate the *next* consecutive count
-    potential_next_count = 1
-    if user.last_message_timestamp:
-        import time
-        SPAM_TIMEOUT = 10.0 # Should be same as in crud.py
-        if (time.time() - user.last_message_timestamp <= SPAM_TIMEOUT):
-             potential_next_count = user.consecutive_message_count + 1
-        
-    consequence_type, amount = crud.calculate_spam_consequence(potential_next_count)
-    required_currency = 0
-    if consequence_type == "cost":
-        required_currency = amount
-        if user.currency_balance < amount:
-            return ValidationResponse(
-                is_valid=False,
-                reason=f"Sending this message would cost {amount} currency due to rapid sending, but you only have {user.currency_balance}.",
-                letter_counts=counts,
-                required_currency=required_currency
-            )
-
-    # If all checks pass
-    return ValidationResponse(is_valid=True, letter_counts=counts, required_currency=required_currency)
-
 
 @router.post("/messages/process", response_model=ProcessResponse)
 def process_message(request: MessageProcessRequest, session: Session = Depends(get_session)):
@@ -88,18 +27,14 @@ def process_message(request: MessageProcessRequest, session: Session = Depends(g
     if not is_valid_letters:
         # Update stats but mark as invalid message maybe? Or just fail? Let's fail.
         # crud.update_user_message_stats(session, user, is_valid_message=False) # Optional: track invalid attempts
-        raise HTTPException(status_code=400, detail=f"Message invalid: {reason}")
+        return ProcessResponse(
+            success=False,
+            message=f"Message failed letter limit check: {reason}.",
+        )
+    
+    last_user_message = crud.get_or_create_last_user_message(session, request.telegram_group_id)
 
-    # 2. Determine spam consequence based on *current* state before update
-    import time
-    current_time = time.time()
-    SPAM_TIMEOUT = 10.0 
-    
-    next_consecutive_count = 1
-    if user.last_message_timestamp and (current_time - user.last_message_timestamp <= SPAM_TIMEOUT):
-        next_consecutive_count = user.consecutive_message_count + 1
-    
-    consequence_type, amount = crud.calculate_spam_consequence(next_consecutive_count)
+    consecutive_count = crud.calculate_consecutive_messages(user, last_user_message)
 
     currency_change = 0
     if consequence_type == "earn":
@@ -180,3 +115,11 @@ def buy_lootbox(request: LootboxBuyRequest, session: Session = Depends(get_sessi
     )
 
     return LootboxBuyResponse(success=True, message=msg, reward_description=reward_description, updated_user_status=updated_status)
+
+@router.get("/users/{telegram_user_id}", response_model=UserRead)
+def get_user(telegram_user_id: int, session: Session = Depends(get_session)):
+    """Fetches user details."""
+    user = crud.get_user(session, telegram_user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+    return user

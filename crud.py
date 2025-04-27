@@ -1,23 +1,23 @@
 from sqlmodel import Session, select
-from models import User, UserRead
+from models import User, last_user_message
 import json
 import time
 from typing import Optional, Dict
 
 # --- User Operations ---
 
-def get_user(session: Session, telegram_user_id: int) -> Optional[User]:
+def get_user(session: Session, telegram_user_id: int, telegram_group_id: int) -> Optional[User]:
     """Fetches a user by their Telegram ID."""
-    statement = select(User).where(User.telegram_user_id == telegram_user_id)
+    statement = select(User).where(User.telegram_user_id == telegram_user_id, User.telegram_group_id == telegram_group_id)
     user = session.exec(statement).first()
     return user
 
-def get_or_create_user(session: Session, telegram_user_id: int) -> User:
+def get_or_create_user(session: Session, telegram_user_id: int, telegram_group_id: int) -> User:
     """Gets a user by Telegram ID, or creates them if they don't exist."""
-    user = get_user(session, telegram_user_id)
+    user = get_user(session, telegram_user_id, telegram_group_id)
     if not user:
-        print(f"Creating new user entry for ID: {telegram_user_id}")
-        user = User(telegram_user_id=telegram_user_id) # Defaults will be applied
+        print(f"Creating new user entry for ID: {telegram_user_id} in group {telegram_group_id}.")
+        user = User(telegram_user_id=telegram_user_id, telegram_group_id=telegram_group_id)
         session.add(user)
         session.commit()
         session.refresh(user) # Load defaults like limits from DB
@@ -76,20 +76,31 @@ def update_user_message_stats(session: Session, user: User, is_valid_message: bo
 
 # --- Helper Functions for Logic (can be moved to a separate 'logic.py' later) ---
 
-def check_letter_limits(text: str, limits: Dict[str, int]) -> tuple[bool, Optional[str], Dict[str, int]]:
-    """Checks if the text adheres to the letter limits."""
-    counts = {chr(ord('A') + i): 0 for i in range(26)}
-    text_upper = text.upper()
 
-    for char in text_upper:
-        if 'A' <= char <= 'Z':
-            counts[char] += 1
+def get_last_user_message(session: Session, telegram_group_id: int) -> last_user_message:
+    statement = select(last_user_message).where(last_user_message.telegram_group_id == telegram_group_id)
+    last_message = session.exec(statement).first()
+    return last_message
 
-    for letter, count in counts.items():
-        if count > limits.get(letter, 0):
-            return False, f"Too many '{letter}'s (Used: {count}, Limit: {limits.get(letter, 0)})", counts
+def get_or_create_last_user_message(session: Session, telegram_group_id: int) -> last_user_message:
+    """Gets the last user message entry for a group, or creates it if it doesn't exist."""
+    last_message = get_last_user_message(session, telegram_group_id)
+    if not last_message:
+        print(f"Creating new last user message entry for group ID: {telegram_group_id}.")
+        last_message = last_user_message(telegram_group_id=telegram_group_id)
+        session.add(last_message)
+        session.commit()
+        session.refresh(last_message)
+        print(f"Last user message entry for group {telegram_group_id} created.")
+    return last_message
 
-    return True, None, counts
+
+def calculate_consecutive_messages(user: User, group_last_message: last_user_message) -> int:
+    if user.telegram_user_id == group_last_message.telegram_user_id:
+        # If the user is the same as the last message sender, increment their count
+        return group_last_message.count + 1
+    else:
+        return 1
 
 def calculate_spam_consequence(consecutive_count: int) -> tuple[str, int]:
     """Determines the currency consequence based on consecutive message count."""

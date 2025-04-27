@@ -10,5 +10,6 @@ dependencies = [
     "httpx>=0.28.1",
     "python-telegram-bot>=22.0",
     "sqlmodel>=0.0.24",
+    "unidecode>=1.4.0",
     "uvicorn>=0.34.2",
 ]

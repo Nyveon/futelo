@@ -19,5 +19,14 @@ def get_session():
 
 # Helper to generate default limits
 def get_default_limits() -> str:
-    limits = {chr(ord('A') + i): 7 for i in range(26)} # A-Z limit 7
+    limits = {chr(ord('A') + i): 0 for i in range(26)} # A-Z limit 7
+    limits['9'] = 0 # For numbers, if needed
+    limits['Ñ'] = 0
+    limits['*'] = 0 # For special characters
+
+    limits['H'] = 1
+    limits['O'] = 1
+    limits['L'] = 1
+    limits['A'] = 1
+
     return json.dumps(limits)
