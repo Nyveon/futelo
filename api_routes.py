@@ -37,25 +37,11 @@ def process_message(request: MessageProcessRequest, session: Session = Depends(g
             success=False,
             message=f"Message failed consecutive message check: {reason}.",
         )
+    
+    # 2. Update user stats
+    user = crud.update_user_after_message(session, user, last_user_message, needed_currency)
 
-    # 3. Apply changes and update stats
-    if needed_currency != 0:
-        user = crud.update_user_currency(session, user, needed_currency)
-
-    # Update timestamp, consecutive count, total valid count, and potentially increase limits
-    user = crud.update_user_message_stats(session, user, is_valid_message=True, consecutive_count_override=next_consecutive_count)
-
-    # Prepare response
-    updated_status = UserRead(
-         telegram_user_id=user.telegram_user_id,
-         currency_balance=user.currency_balance,
-         letter_limits=user.letter_limits,
-         total_valid_messages_sent=user.total_valid_messages_sent,
-         last_message_timestamp=user.last_message_timestamp,
-         consecutive_message_count=user.consecutive_message_count
-    )
-
-    return ProcessResponse(success=True, message=msg, updated_user_status=updated_status)
+    return ProcessResponse(success=True)
 
 # --- Lootbox Endpoint ---
 
