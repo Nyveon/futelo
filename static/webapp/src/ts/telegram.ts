@@ -31,10 +31,11 @@ export function Telegram() {
 					return;
 				}
 
+				const letterLimits = Object.values(data.letter_limits)
+
 				return {
-					letterLimits: data.letter_limits_list,
-					level: data.current_level,
-					msgLeft: data.messages_next_level,
+					letterLimits: letterLimits,
+					currencyBalance: data.currency_balance
 				};
 			}
 		},
