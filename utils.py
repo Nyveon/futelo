@@ -1,5 +1,6 @@
 from unidecode import unidecode
 from typing import Dict, Optional
+from models import User, last_user_message
 
 def check_letter_limits(text: str, limits: Dict[str, int]) -> tuple[bool, Optional[str]]:
     """Checks if the text adheres to the letter limits."""
@@ -24,3 +25,23 @@ def check_letter_limits(text: str, limits: Dict[str, int]) -> tuple[bool, Option
             return False, f"Too many '{letter}'s"
 
     return True, None
+
+def check_user_concurrent_message_count(user: User, group_last_message: last_user_message) -> tuple[bool, Optional[str], int]:
+    """Checks the user's consecutive message count and updates it."""
+    if user.telegram_user_id == group_last_message.telegram_user_id:
+        consecutive_count = group_last_message.count + 1
+    else:
+        consecutive_count = 1
+    
+    if consecutive_count == 1:
+        needed_currency = -10
+    elif consecutive_count == 2:
+        needed_currency = 0
+    else:
+        needed_currency = 10
+
+    if user.currency_balance < needed_currency:
+        return False, f"Insufficient currency for consecutive message count. Needed: {needed_currency}, Available: {user.currency_balance}.", needed_currency
+    return True, None, needed_currency
+    
+    

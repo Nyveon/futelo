@@ -95,13 +95,6 @@ def get_or_create_last_user_message(session: Session, telegram_group_id: int) ->
     return last_message
 
 
-def calculate_consecutive_messages(user: User, group_last_message: last_user_message) -> int:
-    if user.telegram_user_id == group_last_message.telegram_user_id:
-        # If the user is the same as the last message sender, increment their count
-        return group_last_message.count + 1
-    else:
-        return 1
-
 def calculate_spam_consequence(consecutive_count: int) -> tuple[str, int]:
     """Determines the currency consequence based on consecutive message count."""
     # Pattern: 1st=earn, 2nd=nothing, 3rd=cost, 4th=earn, etc.

@@ -14,7 +14,7 @@ class User(SQLModel, table=True):
     telegram_group_id: int = Field(index=True)
     currency_balance: int = Field(default=0)
     letter_limits_json: str = Field(default_factory=get_default_limits) # Store limits as JSON string
-    consecutive_message_count: int = Field(default=0)
+    number_of_messages_sent: int = Field(default=0)
 
     #index for user and group
     __table_args__ = (
@@ -41,9 +41,10 @@ class last_user_message(SQLModel, table=True):
 # Model for reading user data via API (excludes internal JSON representation)
 class UserRead(BaseModel):
     telegram_user_id: int
+    telegram_group_id: int
     currency_balance: int
     letter_limits: Dict[str, int] # Use the property for API output
-    consecutive_message_count: int
+    number_of_messages_sent: int
 
 # Model for processing a message (after validation maybe)
 class MessageProcessRequest(BaseModel):
