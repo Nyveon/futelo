@@ -19,7 +19,7 @@ def process_message(request: MessageProcessRequest, session: Session = Depends(g
     updates counts, potentially increases limits.
     Assumes the bot might call this *after* a basic check or directly.
     """
-    user = crud.get_or_create_user(session, request.telegram_user_id)
+    user = crud.get_or_create_user(session, request.telegram_user_id, request.telegram_group_id)
 
     # 1. Validate letter limits again (important!)
     is_valid_letters, reason = check_letter_limits(request.text, user.letter_limits)
