@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Futelo</title>
+
+		<script src="/telegram-web-app.min.js"></script>
+	</head>
+	<body
+		x-data="{
+            ...Game(),
+            telegram: Telegram(),
+
+            updateCategories() {
+                const originalText = this.$refs.editable.innerText
+                const text = this.normalizeText(originalText);
+                Object.keys(this.categories).forEach(key => this.categories[key] = 0);
+                if (!text) return;
+                for (let char of text) {
+                    if (/\s/.test(char)) continue;
+                    if (this.categories.hasOwnProperty(char)) {
+                        this.categories[char]++;
+                    } else if (!isNaN(char)) {
+                        this.categories['#']++;
+                    } else if (/[^a-z0-9]/.test(char)) {
+                        this.categories['?']++;
+                    }
+                }
+
+                this.applyColoredText(originalText);
+                this.valid = this.checkValid(text);
+            },
+
+            applyColoredText(text) {
+                const selection = window.getSelection();
+                const range = selection.getRangeAt(0);
+                const preCaretRange = range.cloneRange();
+                preCaretRange.selectNodeContents(this.$refs.editable);
+                preCaretRange.setEnd(range.startContainer, range.startOffset);
+                const cursorPosition = preCaretRange.toString().length;
+
+                let coloredHTML = '';
+                for (let char of text) {
+                    const className = this.getCharClass(char);
+                    coloredHTML += `<span class='${className}'>${char}</span>`;
+                }
+
+                this.$refs.editable.innerHTML = coloredHTML;
+
+                this.restoreCursorPosition(cursorPosition);
+            },
+
+            restoreCursorPosition(cursorPosition) {
+                const selection = window.getSelection();
+                const range = document.createRange();
+
+                let charCount = 0;
+                const nodes = this.$refs.editable.childNodes;
+
+                for (let node of nodes) {
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        const textLength = node.length;
+                        if (charCount + textLength >= cursorPosition) {
+                            range.setStart(node, cursorPosition - charCount);
+                            range.collapse(true);
+                            break;
+                        }
+                        charCount += textLength;
+                    } else if (node.nodeType === Node.ELEMENT_NODE) {
+                        const textLength = node.textContent.length;
+                        if (charCount + textLength >= cursorPosition) {
+                            range.setStart(node.firstChild || node, cursorPosition - charCount);
+                            range.collapse(true);
+                            break;
+                        }
+                        charCount += textLength;
+                    }
+                }
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        }"
+		x-init="
+            async () => {
+                const userData = await telegram.getUserStats();
+                mapLetterLimits(userData.letterLimits);
+                level = userData.level;
+                msgLeft = userData.msgLeft;
+            }
+        "
+	>
+		<main>
+			<h1>Futelo</h1>
+
+			<section class="editable-section">
+				<div
+					contenteditable="true"
+					x-ref="editable"
+					@input="updateCategories"
+				></div>
+				<button
+					x-on:click="telegram.share($refs.editable.innerText)"
+					x-bind:disabled="!valid"
+				>
+					→
+				</button>
+			</section>
+
+			<template x-if="level != -1">
+				<div id="user-state">
+					<b>LVL: <span x-text="level"></span></b>
+					<i
+						>(<span
+							x-text="`${msgLeft} futelo${msgLeft > 1 ? 's' : ''}`"
+						></span>
+						más para subir)</i
+					>
+				</div>
+			</template>
+
+			<section>
+				<ul class="inventory">
+					<template x-for="(count, category) in categories">
+						<li
+							class="item"
+							:class="getOtherFrequencyClass(category, count)"
+						>
+							<pre
+								class="freq"
+								:class="(count > categoryLimit(category)) && 'fx'"
+								x-text="frequencyText(category, count, categoryLimit(category))"
+							></pre>
+						</li>
+					</template>
+				</ul>
+			</section>
+		</main>
+
+		<script type="module" src="/src/main.ts"></script>
+	</body>
+</html>
