@@ -24,55 +24,6 @@ def get_or_create_user(session: Session, telegram_user_id: int, telegram_group_i
         print(f"User {telegram_user_id} created.")
     return user
 
-def update_user_currency(session: Session, user: User, change: int) -> User:
-    """Updates user's currency balance."""
-    user.currency_balance += change
-    session.add(user)
-    session.commit()
-    session.refresh(user)
-    return user
-
-def update_user_limits(session: Session, user: User, new_limits: Dict[str, int]) -> User:
-    """Updates the user's letter limits."""
-    user.letter_limits = new_limits # Uses the setter property
-    session.add(user)
-    session.commit()
-    session.refresh(user)
-    return user
-
-def update_user_message_stats(session: Session, user: User, is_valid_message: bool, consecutive_count_override: Optional[int] = None) -> User:
-    """Updates message counts and anti-spam state."""
-    current_time = time.time()
-    
-    # Define anti-spam timeout (e.g., 10 seconds)
-    SPAM_TIMEOUT = 10.0 
-
-    if user.last_message_timestamp is None or (current_time - user.last_message_timestamp > SPAM_TIMEOUT):
-         user.consecutive_message_count = 1 # Reset sequence
-    elif consecutive_count_override is not None:
-         user.consecutive_message_count = consecutive_count_override
-    else:
-        user.consecutive_message_count += 1
-
-    user.last_message_timestamp = current_time
-
-    if is_valid_message: # Only increment total count for valid messages processed
-        user.total_valid_messages_sent += 1
-
-        # --- Placeholder: Logic to increase limits based on total messages ---
-        # Example: Increase all limits by 1 every 50 valid messages
-        LIMIT_INCREASE_THRESHOLD = 50
-        if user.total_valid_messages_sent > 0 and user.total_valid_messages_sent % LIMIT_INCREASE_THRESHOLD == 0:
-            print(f"User {user.telegram_user_id} reached {user.total_valid_messages_sent} messages. Increasing limits.")
-            current_limits = user.letter_limits
-            new_limits = {letter: limit + 1 for letter, limit in current_limits.items()}
-            user.letter_limits = new_limits # Use property setter
-
-    session.add(user)
-    session.commit()
-    session.refresh(user)
-    return user
-
 
 # --- Helper Functions for Logic (can be moved to a separate 'logic.py' later) ---
 
@@ -94,21 +45,26 @@ def get_or_create_last_user_message(session: Session, telegram_group_id: int) ->
         print(f"Last user message entry for group {telegram_group_id} created.")
     return last_message
 
+def update_user_after_message(session: Session, user: User, group_last_message: last_user_message, needed_currency: int) -> User:
+    """Updates user stats after processing a message."""
+    user.number_of_messages_sent += 1
+    user.currency_balance -= needed_currency
+    if group_last_message.telegram_user_id == user.telegram_user_id:
+        group_last_message.count += 1
+    else:
+        group_last_message.telegram_user_id = user.telegram_user_id
+        group_last_message.count = 1
+    session.add(user)
+    session.add(group_last_message)
+    session.commit()
+    session.refresh(user)
+    session.refresh(group_last_message)
+    return user
 
-def calculate_spam_consequence(consecutive_count: int) -> tuple[str, int]:
-    """Determines the currency consequence based on consecutive message count."""
-    # Pattern: 1st=earn, 2nd=nothing, 3rd=cost, 4th=earn, etc.
-    MODULO = 3
-    EARN_AMOUNT = 5 # Example currency amount
-    COST_AMOUNT = 10 # Example currency cost
-
-    remainder = consecutive_count % MODULO
-    
-    if remainder == 1:
-        return "earn", EARN_AMOUNT
-    elif remainder == 2:
-        return "nothing", 0
-    elif remainder == 0: # Corresponds to 3rd, 6th, 9th...
-        return "cost", COST_AMOUNT
-    else: # Should not happen
-        return "nothing", 0
+def update_user_currency(session: Session, user: User, change: int) -> User:
+    """Updates user's currency balance."""
+    user.currency_balance += change
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user
