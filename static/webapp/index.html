@@ -85,8 +85,7 @@
             async () => {
                 const userData = await telegram.getUserStats();
                 mapLetterLimits(userData.letterLimits);
-                level = userData.level;
-                msgLeft = userData.msgLeft;
+                level = userData.currencyBalance;
             }
         "
 	>
@@ -109,13 +108,8 @@
 
 			<template x-if="level != -1">
 				<div id="user-state">
-					<b>LVL: <span x-text="level"></span></b>
-					<i
-						>(<span
-							x-text="`${msgLeft} futelo${msgLeft > 1 ? 's' : ''}`"
-						></span>
-						más para subir)</i
-					>
+					<b>Fubolivares: <span x-text="level"></span></b>
+					<i>Placeholder...</i>
 				</div>
 			</template>
 
