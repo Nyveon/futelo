@@ -1,0 +1,5 @@
+[currency_awarded]
+# currency won after 1 message, 2 messages and beyond
+currency_1 = 10
+currency_2 = 0
+currency_3 = -10
