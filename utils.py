@@ -1,6 +1,7 @@
 from unidecode import unidecode
 from typing import Dict, Optional
 from models import User, last_user_message
+from config import CURRENCY_AWARDED
 
 def check_letter_limits(text: str, limits: Dict[str, int]) -> tuple[bool, Optional[str]]:
     """Checks if the text adheres to the letter limits."""
@@ -32,13 +33,8 @@ def check_user_concurrent_message_count(user: User, group_last_message: last_use
         consecutive_count = group_last_message.count + 1
     else:
         consecutive_count = 1
-    
-    if consecutive_count == 1:
-        needed_currency = -10
-    elif consecutive_count == 2:
-        needed_currency = 0
-    else:
-        needed_currency = 10
+
+    needed_currency += CURRENCY_AWARDED.get(min(consecutive_count,3))
 
     if user.currency_balance < needed_currency:
         return False, f"Insufficient currency for consecutive message count. Needed: {needed_currency}, Available: {user.currency_balance}.", needed_currency
