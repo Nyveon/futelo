@@ -1,10 +1,10 @@
 from sqlmodel import Session, select
-from models import User, last_user_message
+from models import User, last_user_message, Lootbox
 import json
 import time
 from typing import Optional, Dict
 
-# --- User Operations ---
+# User operations
 
 def get_user(session: Session, telegram_user_id: int, telegram_group_id: int) -> Optional[User]:
     """Fetches a user by their Telegram ID."""
@@ -24,9 +24,15 @@ def get_or_create_user(session: Session, telegram_user_id: int, telegram_group_i
         print(f"User {telegram_user_id} created.")
     return user
 
+def update_user_currency(session: Session, user: User, change: int) -> User:
+    """Updates user's currency balance."""
+    user.currency_balance += change
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user
 
-# --- Helper Functions for Logic (can be moved to a separate 'logic.py' later) ---
-
+# last_user_message operations
 
 def get_last_user_message(session: Session, telegram_group_id: int) -> last_user_message:
     statement = select(last_user_message).where(last_user_message.telegram_group_id == telegram_group_id)
@@ -45,6 +51,24 @@ def get_or_create_last_user_message(session: Session, telegram_group_id: int) ->
         print(f"Last user message entry for group {telegram_group_id} created.")
     return last_message
 
+# lootbox operations
+
+def create_lootbox(session: Session, telegram_user_id: int, telegram_group_id: int, rarity: str) -> Lootbox:
+    """Creates a lootbox entry."""
+    lootbox = Lootbox(telegram_user_id=telegram_user_id, telegram_group_id=telegram_group_id, rarity=rarity)
+    session.add(lootbox)
+    session.commit()
+    session.refresh(lootbox)
+    return lootbox
+
+def get_lootbox(session: Session, lootbox_id: int) -> Optional[Lootbox]:
+    """Fetches a lootbox by its ID."""
+    statement = select(Lootbox).where(Lootbox.id == lootbox_id)
+    lootbox = session.exec(statement).first()
+    return lootbox
+
+# Multiple operations
+
 def update_user_after_message(session: Session, user: User, group_last_message: last_user_message, needed_currency: int) -> User:
     """Updates user stats after processing a message."""
     user.number_of_messages_sent += 1
@@ -59,12 +83,4 @@ def update_user_after_message(session: Session, user: User, group_last_message: 
     session.commit()
     session.refresh(user)
     session.refresh(group_last_message)
-    return user
-
-def update_user_currency(session: Session, user: User, change: int) -> User:
-    """Updates user's currency balance."""
-    user.currency_balance += change
-    session.add(user)
-    session.commit()
-    session.refresh(user)
     return user

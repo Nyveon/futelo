@@ -36,6 +36,13 @@ class last_user_message(SQLModel, table=True):
     telegram_user_id: int = Field(default=-1) # Make telegram ID searchable and unique
     count: int = Field(default=0)
 
+class Lootbox(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True) # Telegram User ID
+    telegram_user_id: int = Field(default=None)
+    telegram_group_id: int = Field(default=None)
+    rarity: str = Field(default=None)
+    opened: bool = Field(default=False)
+
 # --- API Request/Response Models (using Pydantic features of SQLModel) ---
 
 # Model for reading user data via API (excludes internal JSON representation)
@@ -55,7 +62,7 @@ class MessageProcessRequest(BaseModel):
 
 class ProcessResponse(BaseModel):
     success: bool
-    message: Optional[str] = None
+    message: str | None
 
 # Model for buying a lootbox
 class LootboxBuyRequest(BaseModel):
@@ -64,5 +71,18 @@ class LootboxBuyRequest(BaseModel):
 
 class LootboxBuyResponse(BaseModel):
     success: bool
+    message: str | None
+    lootbox_id: int | None
+    rarity: str | None
+
+class LootboxOpenRequest(BaseModel):
+    telegram_user_id: int
+    telegram_group_id: int
+    lootbox_id: int
+
+class LootboxOpenResponse(BaseModel):
+    success: bool
     message: str
+    new_letters: list[str] | None
+
     

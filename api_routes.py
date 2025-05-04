@@ -5,9 +5,11 @@ import random
 from database import get_session
 import crud # Import CRUD functions
 from models import (
-    UserRead, MessageProcessRequest, ProcessResponse, LootboxBuyRequest, LootboxBuyResponse
+    UserRead, MessageProcessRequest, ProcessResponse, LootboxBuyRequest, LootboxBuyResponse, LootboxOpenRequest, LootboxOpenResponse
 )
 from utils import check_letter_limits, check_user_concurrent_message_count
+from numpy import random
+import config
 
 # Create an API router
 router = APIRouter()
@@ -41,50 +43,69 @@ def process_message(request: MessageProcessRequest, session: Session = Depends(g
     # 2. Update user stats
     user = crud.update_user_after_message(session, user, last_user_message, needed_currency)
 
-    return ProcessResponse(success=True)
-
-# --- Lootbox Endpoint ---
+    return ProcessResponse(success=True, message=None)
 
 @router.post("/lootbox/buy", response_model=LootboxBuyResponse)
 def buy_lootbox(request: LootboxBuyRequest, session: Session = Depends(get_session)):
     """Allows a user to buy a letter lootbox."""
-    LOOTBOX_COST = 50 # Example cost
-    user = crud.get_or_create_user(session, request.telegram_user_id)
+    LOOTBOX_COST = config.lootbox_cost
+    with session.begin():
+        user = crud.get_or_create_user(session, request.telegram_user_id, request.telegram_group_id)
 
-    if user.currency_balance < LOOTBOX_COST:
-        raise HTTPException(status_code=402, detail=f"Insufficient currency. Need {LOOTBOX_COST}, have {user.currency_balance}.")
+        if user.currency_balance < LOOTBOX_COST:
+            return LootboxBuyResponse(
+                success=False,
+                message=f"Insufficient currency to buy lootbox. Needed: {LOOTBOX_COST}, Available: {user.currency_balance}.",
+                lootbox_id=None,
+                rarity=None,
+            )
 
-    # Deduct cost
-    user = crud.update_user_currency(session, user, -LOOTBOX_COST)
+        # Deduct cost
+        user = crud.update_user_currency(session, user, -LOOTBOX_COST)
+        
+        rarity = str(random.choice([lootbox["rarity"] for lootbox in config.lootboxes], p=[lootbox["probability"] for lootbox in config.lootboxes]))
 
-    # --- Determine Reward ---
-    # Example: Increase limit for 1-3 random letters by +1
-    num_letters_to_increase = random.randint(1, 3)
-    letters = [chr(ord('A') + i) for i in range(26)]
-    letters_to_increase = random.sample(letters, num_letters_to_increase)
+        lootbox = crud.create_lootbox(session, request.telegram_user_id, request.telegram_group_id, rarity)
 
-    current_limits = user.letter_limits
-    reward_details = []
-    for letter in letters_to_increase:
-        current_limits[letter] = current_limits.get(letter, 0) + 1
-        reward_details.append(f"'{letter}' limit +1")
+        return LootboxBuyResponse(success=True, message=None, lootbox_id=lootbox.id, rarity=rarity)
 
-    user = crud.update_user_limits(session, user, current_limits)
-    # --- End Reward Logic ---
 
-    reward_description = ", ".join(reward_details)
-    msg = f"Lootbox purchased for {LOOTBOX_COST} currency! Rewards: {reward_description}."
+@router.post("/lootbox/open", response_model=LootboxOpenResponse)
+def open_lootbox(request: LootboxOpenRequest, session: Session = Depends(get_session)):
+    """Allows a user to open a letter lootbox."""
+    with session.begin():
+        lootbox = crud.get_lootbox(session, request.lootbox_id)
 
-    updated_status = UserRead(
-         telegram_user_id=user.telegram_user_id,
-         currency_balance=user.currency_balance,
-         letter_limits=user.letter_limits,
-         total_valid_messages_sent=user.total_valid_messages_sent,
-         last_message_timestamp=user.last_message_timestamp,
-         consecutive_message_count=user.consecutive_message_count
-    )
+        if not lootbox:
+            return LootboxOpenResponse(
+                success=False,
+                message="Lootbox not found.",
+                new_letters=None,
+            )
+        
+        if lootbox.telegram_user_id != request.telegram_user_id or lootbox.telegram_group_id != request.telegram_group_id:
+            return LootboxOpenResponse(
+                success=False,
+                message="Lootbox does not belong to this user or group.",
+                new_letters=None,
+            )
 
-    return LootboxBuyResponse(success=True, message=msg, reward_description=reward_description, updated_user_status=updated_status)
+        if lootbox.opened:
+            return LootboxOpenResponse(
+                success=False,
+                message="Lootbox already opened.",
+                new_letters=None,
+            )
+
+        
+        
+        lootbox.opened = True
+        session.add(lootbox)
+        session.commit()
+
+        rarity = lootbox.rarity
+
+        return LootboxOpenResponse(success=True, message="Lootbox opened successfully.")
 
 @router.get("/users/{telegram_group_id}/{telegram_user_id}", response_model=UserRead)
 def get_user(telegram_user_id: int, telegram_group_id, session: Session = Depends(get_session)):

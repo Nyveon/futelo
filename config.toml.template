@@ -3,3 +3,19 @@
 currency_1 = 10
 currency_2 = 0
 currency_3 = -10
+
+[lootbox]
+cost=150
+rarities=["common","uncommon","rare","epic","legendary", "funny"]
+common_p=0.6
+common_r=4
+uncommon_p=0.2
+uncommon_r=5
+rare_p=0.13
+rare_r=7
+epic_p=0.065
+epic_r=10
+legendary_p=0.00499
+legendary_r=20
+funny_p=0.00001
+funny_r=1

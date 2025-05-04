@@ -11,4 +11,6 @@ wheels/
 
 *.db
 
+.vscode/
+
 config.toml
