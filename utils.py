@@ -2,6 +2,7 @@ from unidecode import unidecode
 from typing import Dict, Optional
 from models import User, last_user_message
 from config import CURRENCY_AWARDED
+import random
 
 def check_letter_limits(text: str, limits: Dict[str, int]) -> tuple[bool, Optional[str]]:
     """Checks if the text adheres to the letter limits."""
@@ -40,4 +41,9 @@ def check_user_concurrent_message_count(user: User, group_last_message: last_use
         return False, f"Insufficient currency for consecutive message count. Needed: {needed_currency}, Available: {user.currency_balance}.", needed_currency
     return True, None, needed_currency
     
-    
+def choose_letters(letter_count: int, user: User) -> list[str]:
+    """Chooses letters based on the user's letter limits."""
+    possible_letters = []
+    for letter, limit in user.letter_limits.items():
+        possible_letters.extend([letter] * (6-limit))
+    return random.sample(possible_letters, min(letter_count, len(possible_letters)) )

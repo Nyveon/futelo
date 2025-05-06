@@ -32,6 +32,17 @@ def update_user_currency(session: Session, user: User, change: int) -> User:
     session.refresh(user)
     return user
 
+def add_letters_to_user(session: Session, user: User, letters: list[str]) -> User:
+    """Adds letters to the user's letter limits."""
+    current_limits = user.letter_limits
+    for letter in letters:
+        current_limits[letter] += 1
+    user.letter_limits = current_limits
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user
+
 # last_user_message operations
 
 def get_last_user_message(session: Session, telegram_group_id: int) -> last_user_message:

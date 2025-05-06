@@ -7,7 +7,7 @@ import crud # Import CRUD functions
 from models import (
     UserRead, MessageProcessRequest, ProcessResponse, LootboxBuyRequest, LootboxBuyResponse, LootboxOpenRequest, LootboxOpenResponse
 )
-from utils import check_letter_limits, check_user_concurrent_message_count
+from utils import check_letter_limits, check_user_concurrent_message_count, choose_letters
 from numpy import random
 import config
 
@@ -104,8 +104,39 @@ def open_lootbox(request: LootboxOpenRequest, session: Session = Depends(get_ses
         session.commit()
 
         rarity = lootbox.rarity
+        lootbox_config = next((lootbox for lootbox in config.lootboxes if lootbox["rarity"] == rarity), None)
+        if lootbox_config is None:
+            return LootboxOpenResponse(
+                success=False,
+                message="Lootbox rarity not found in configuration.",
+                new_letters=None,
+            )
+        new_letter_count = lootbox_config["reward"]
 
-        return LootboxOpenResponse(success=True, message="Lootbox opened successfully.")
+        user = crud.get_or_create_user(session, lootbox.telegram_user_id, lootbox.telegram_group_id)
+        new_letters = choose_letters(new_letter_count, user)
+
+        if len(new_letters) == 0:
+            return LootboxOpenResponse(
+                success=False,
+                message="No letters available to choose from.",
+                new_letters=None,
+            )
+
+        user = crud.add_letters_to_user(session, user, new_letters)
+
+        if len(new_letters) != new_letter_count:
+            return LootboxOpenResponse(
+                success=True,
+                message="User has reached letter limits, some letters were not added.",
+                new_letters=new_letters,
+            )
+        
+        return LootboxOpenResponse(
+            success=True,
+            message="Lootbox opened successfully.",
+            new_letters=new_letters,
+        )
 
 @router.get("/users/{telegram_group_id}/{telegram_user_id}", response_model=UserRead)
 def get_user(telegram_user_id: int, telegram_group_id, session: Session = Depends(get_session)):
