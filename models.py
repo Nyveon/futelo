@@ -63,6 +63,7 @@ class MessageProcessRequest(BaseModel):
 class ProcessResponse(BaseModel):
     success: bool
     message: str | None
+    lost_currency: bool
 
 # Model for buying a lootbox
 class LootboxBuyRequest(BaseModel):

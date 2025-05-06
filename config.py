@@ -20,3 +20,5 @@ lootboxes = [{"rarity" : lootbox_rarity,
 
 assert isclose(sum([lootbox["probability"] for lootbox in lootboxes]),1), f"Probabilities must sum to 1 but sum is {sum([lootbox['probability'] for lootbox in lootboxes])}"
 
+BOT_TOKEN = config["credentials"]["BOT_TOKEN"]
+MINI_APP_LINK = config["credentials"]["MINI_APP_LINK"]

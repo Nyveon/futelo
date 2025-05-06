@@ -35,7 +35,7 @@ def check_user_concurrent_message_count(user: User, group_last_message: last_use
     else:
         consecutive_count = 1
 
-    needed_currency += CURRENCY_AWARDED.get(min(consecutive_count,3))
+    needed_currency = -CURRENCY_AWARDED.get(min(consecutive_count,3))
 
     if user.currency_balance < needed_currency:
         return False, f"Insufficient currency for consecutive message count. Needed: {needed_currency}, Available: {user.currency_balance}.", needed_currency

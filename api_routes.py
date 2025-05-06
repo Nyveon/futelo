@@ -29,6 +29,7 @@ def process_message(request: MessageProcessRequest, session: Session = Depends(g
         return ProcessResponse(
             success=False,
             message=f"Message failed letter limit check: {reason}.",
+            lost_currency=False,
         )
     
     last_user_message = crud.get_or_create_last_user_message(session, request.telegram_group_id)
@@ -38,12 +39,13 @@ def process_message(request: MessageProcessRequest, session: Session = Depends(g
         return ProcessResponse(
             success=False,
             message=f"Message failed consecutive message check: {reason}.",
+            lost_currency=False,
         )
     
     # 2. Update user stats
     user = crud.update_user_after_message(session, user, last_user_message, needed_currency)
 
-    return ProcessResponse(success=True, message=None)
+    return ProcessResponse(success=True, message=None, lost_currency=(needed_currency > 0))
 
 @router.post("/lootbox/buy", response_model=LootboxBuyResponse)
 def buy_lootbox(request: LootboxBuyRequest, session: Session = Depends(get_session)):
