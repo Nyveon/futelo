@@ -1,17 +1,39 @@
 from config import BOT_TOKEN, MINI_APP_LINK
-from telegram.ext import Application, ChatMemberHandler, ContextTypes, MessageHandler, filters, CallbackContext
-from telegram import Update, ChatMember, ChatMemberUpdated
+from telegram.ext import (
+    Application,
+    ChatMemberHandler,
+    ContextTypes,
+    MessageHandler,
+    filters,
+    CallbackContext,
+    CommandHandler,
+    CallbackQueryHandler,
+)
+from telegram import (
+    Update,
+    ChatMember,
+    ChatMemberUpdated,
+    Chat,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+)
 from typing import Optional
+from api_routes import process_message, process_buy_lootbox, process_open_lootbox
+
 
 # function stolen from https://github.com/python-telegram-bot/python-telegram-bot/blob/master/examples/chatmemberbot.py
 # hehehe
-def extract_status_change(chat_member_update: ChatMemberUpdated) -> Optional[tuple[bool, bool]]:
+def extract_status_change(
+    chat_member_update: ChatMemberUpdated,
+) -> Optional[tuple[bool, bool]]:
     """Takes a ChatMemberUpdated instance and extracts whether the 'old_chat_member' was a member
     of the chat and whether the 'new_chat_member' is a member of the chat. Returns None, if
     the status didn't change.
     """
     status_change = chat_member_update.difference().get("status")
-    old_is_member, new_is_member = chat_member_update.difference().get("is_member", (None, None))
+    old_is_member, new_is_member = chat_member_update.difference().get(
+        "is_member", (None, None)
+    )
 
     if status_change is None:
         return None
@@ -30,22 +52,118 @@ def extract_status_change(chat_member_update: ChatMemberUpdated) -> Optional[tup
 
     return was_member, is_member
 
-async def track_chats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+
+async def join_chat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    result = extract_status_change(update.my_chat_member)
+    if result is None:
+        return
+    was_member, is_member = result
+    chat = update.effective_chat
+    if (
+        chat.type in [Chat.GROUP, Chat.SUPERGROUP]
+        and was_member is False
+        and is_member is True
+    ):
+        welcome_message = await update.effective_chat.send_message("MENSAJE DE LLEGADA")
+        await welcome_message.pin()
+
+
+async def greet_chat_members(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
+    result = extract_status_change(update.chat_member)
+    if result is None:
+        return
+    was_member, is_member = result
+    chat = update.effective_chat
+    if (
+        chat.type in [Chat.GROUP, Chat.SUPERGROUP]
+        and was_member is False
+        and is_member is True
+    ):
+        await update.chat_member.from_user.send_message("MENSAJE DE BIENVENIDA")
+
+
+async def receive_message(update: Update, context: CallbackContext) -> None:
+    if update.message.chat.type in [Chat.GROUP, Chat.SUPERGROUP]:
+        process_response = await process_message(
+            update.message.from_user.id, update.message.chat.id, update.message.text
+        )
+        if process_response.success:
+            if process_response.lost_currency:
+                await update.message.from_user.send_message(
+                    "ADVERTENCIA DE PERDER MONEDAS"
+                )
+        else:
+            await update.message.from_user.send_message(
+                f"MENSAJE DE ERROR: {process_response.message}"
+            )
+            await update.message.delete()
+
+
+async def buy_lootbox(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.message.chat.type in [Chat.GROUP, Chat.SUPERGROUP]:
+        buy_response = await process_buy_lootbox(
+            update.message.from_user.id, update.message.chat.id
+        )
+        if buy_response.success:
+            await update.message.chat.send_message(
+                f"¡Has conseguido una lootbox de rareza {buy_response.rarity}!\n",
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        InlineKeyboardButton(
+                            "Abrir lootbox",
+                            callback_data=f"open_lootbox_{buy_response.lootbox_id}",
+                        ),
+                    ]
+                ),
+            )
+            await update.message.delete()
+        else:
+            await update.message.from_user.send_message(
+                f"MENSAJE DE ERROR: {buy_response.message}"
+            )
+
+
+async def open_lootbox(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.callback_query.data.startswith("open_lootbox_"):
+        lootbox_id = int(update.callback_query.data.split("_")[2])
+        open_response = await process_open_lootbox(
+            update.callback_query.from_user.id,
+            update.callback_query.message.chat.id,
+            lootbox_id,
+        )
+        if open_response.success:
+            await update.callback_query.chat_instance.send_message(
+                f"¡Has abierto la lootbox y has conseguido: {', '.join(open_response.new_letters)}!"
+            )
+        else:
+            await update.callback_query.message.edit_text(
+                f"MENSAJE DE ERROR: {open_response.message}"
+            )
+
+
+async def rules(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     pass
 
-async def greet_chat_members(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    pass
-
-async def process_message(update: Update, context: CallbackContext) -> None:
-    pass
 
 def main() -> None:
-
     application = Application.builder().token(BOT_TOKEN).build()
 
-    application.add_handler(ChatMemberHandler(track_chats, ChatMemberHandler.MY_CHAT_MEMBER))
-    application.add_handler(ChatMemberHandler(greet_chat_members, ChatMemberHandler.CHAT_MEMBER))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, process_message))
+    application.add_handler(
+        ChatMemberHandler(join_chat, ChatMemberHandler.MY_CHAT_MEMBER)
+    )
+    application.add_handler(
+        ChatMemberHandler(greet_chat_members, ChatMemberHandler.CHAT_MEMBER)
+    )
+    application.add_handler(CommandHandler("comprar_lootbox", buy_lootbox))
+    application.add_handler(
+        CallbackQueryHandler(open_lootbox, pattern=r"^open_lootbox_")
+    )
+    application.add_handler(CommandHandler("reglas", rules))
+    application.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, receive_message)
+    )
 
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
