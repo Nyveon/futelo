@@ -6,23 +6,37 @@ from typing import Optional, Dict
 
 # User operations
 
-def get_user(session: Session, telegram_user_id: int, telegram_group_id: int) -> Optional[User]:
+
+def get_user(
+    session: Session, telegram_user_id: int, telegram_group_id: int
+) -> Optional[User]:
     """Fetches a user by their Telegram ID."""
-    statement = select(User).where(User.telegram_user_id == telegram_user_id, User.telegram_group_id == telegram_group_id)
+    statement = select(User).where(
+        User.telegram_user_id == telegram_user_id,
+        User.telegram_group_id == telegram_group_id,
+    )
     user = session.exec(statement).first()
     return user
 
-def get_or_create_user(session: Session, telegram_user_id: int, telegram_group_id: int) -> User:
+
+def get_or_create_user(
+    session: Session, telegram_user_id: int, telegram_group_id: int
+) -> User:
     """Gets a user by Telegram ID, or creates them if they don't exist."""
     user = get_user(session, telegram_user_id, telegram_group_id)
     if not user:
-        print(f"Creating new user entry for ID: {telegram_user_id} in group {telegram_group_id}.")
-        user = User(telegram_user_id=telegram_user_id, telegram_group_id=telegram_group_id)
+        print(
+            f"Creating new user entry for ID: {telegram_user_id} in group {telegram_group_id}."
+        )
+        user = User(
+            telegram_user_id=telegram_user_id, telegram_group_id=telegram_group_id
+        )
         session.add(user)
         session.commit()
-        session.refresh(user) # Load defaults like limits from DB
+        session.refresh(user)  # Load defaults like limits from DB
         print(f"User {telegram_user_id} created.")
     return user
+
 
 def update_user_currency(session: Session, user: User, change: int) -> User:
     """Updates user's currency balance."""
@@ -31,6 +45,7 @@ def update_user_currency(session: Session, user: User, change: int) -> User:
     session.commit()
     session.refresh(user)
     return user
+
 
 def add_letters_to_user(session: Session, user: User, letters: list[str]) -> User:
     """Adds letters to the user's letter limits."""
@@ -43,18 +58,29 @@ def add_letters_to_user(session: Session, user: User, letters: list[str]) -> Use
     session.refresh(user)
     return user
 
+
 # last_user_message operations
 
-def get_last_user_message(session: Session, telegram_group_id: int) -> last_user_message:
-    statement = select(last_user_message).where(last_user_message.telegram_group_id == telegram_group_id)
+
+def get_last_user_message(
+    session: Session, telegram_group_id: int
+) -> last_user_message:
+    statement = select(last_user_message).where(
+        last_user_message.telegram_group_id == telegram_group_id
+    )
     last_message = session.exec(statement).first()
     return last_message
 
-def get_or_create_last_user_message(session: Session, telegram_group_id: int) -> last_user_message:
+
+def get_or_create_last_user_message(
+    session: Session, telegram_group_id: int
+) -> last_user_message:
     """Gets the last user message entry for a group, or creates it if it doesn't exist."""
     last_message = get_last_user_message(session, telegram_group_id)
     if not last_message:
-        print(f"Creating new last user message entry for group ID: {telegram_group_id}.")
+        print(
+            f"Creating new last user message entry for group ID: {telegram_group_id}."
+        )
         last_message = last_user_message(telegram_group_id=telegram_group_id)
         session.add(last_message)
         session.commit()
@@ -62,15 +88,24 @@ def get_or_create_last_user_message(session: Session, telegram_group_id: int) ->
         print(f"Last user message entry for group {telegram_group_id} created.")
     return last_message
 
+
 # lootbox operations
 
-def create_lootbox(session: Session, telegram_user_id: int, telegram_group_id: int, rarity: str) -> Lootbox:
+
+def create_lootbox(
+    session: Session, telegram_user_id: int, telegram_group_id: int, rarity: str
+) -> Lootbox:
     """Creates a lootbox entry."""
-    lootbox = Lootbox(telegram_user_id=telegram_user_id, telegram_group_id=telegram_group_id, rarity=rarity)
+    lootbox = Lootbox(
+        telegram_user_id=telegram_user_id,
+        telegram_group_id=telegram_group_id,
+        rarity=rarity,
+    )
     session.add(lootbox)
     session.commit()
     session.refresh(lootbox)
     return lootbox
+
 
 def get_lootbox(session: Session, lootbox_id: int) -> Optional[Lootbox]:
     """Fetches a lootbox by its ID."""
@@ -78,9 +113,16 @@ def get_lootbox(session: Session, lootbox_id: int) -> Optional[Lootbox]:
     lootbox = session.exec(statement).first()
     return lootbox
 
+
 # Multiple operations
 
-def update_user_after_message(session: Session, user: User, group_last_message: last_user_message, needed_currency: int) -> User:
+
+def update_user_after_message(
+    session: Session,
+    user: User,
+    group_last_message: last_user_message,
+    needed_currency: int,
+) -> User:
     """Updates user stats after processing a message."""
     user.number_of_messages_sent += 1
     user.currency_balance -= needed_currency
