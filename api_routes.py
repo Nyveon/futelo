@@ -38,7 +38,6 @@ def process_message(
         session, request.telegram_user_id, request.telegram_group_id
     )
 
-    # 1. Validate letter limits again (important!)
     is_valid_letters, reason = check_letter_limits(request.text, user.letter_limits)
     if not is_valid_letters:
         return ProcessResponse(
