@@ -66,7 +66,33 @@ async def join_chat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         and was_member is False
         and is_member is True
     ):
-        welcome_message = await update.effective_chat.send_message("MENSAJE DE LLEGADA")
+        await update.effective_chat.send_message(
+            "MENSAJE DE LLEGADA recuerda darme permisos de admin blabla"
+        )
+
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.effective_chat.type not in [Chat.GROUP, Chat.SUPERGROUP]:
+        await update.message.reply_text(
+            "Este bot solo funciona en grupos. Úsalo en un grupo o supergrupo."
+        )
+        return
+    bot_member = await context.bot.get_chat_member(
+        chat_id=update.effective_chat.id, user_id=context.bot.id
+    )
+    if bot_member.status not in [
+        ChatMember.ADMINISTRATOR,
+        ChatMember.OWNER,
+    ]:
+        await update.message.reply_text(
+            "¡Hola! Para usar este bot, por favor, asegúrate de darme permisos de administrador."
+        )
+        return
+    else:
+        # quizas podriamos hacer algo para que el bot no funcione si no es admin
+        welcome_message = await update.message.reply_text(
+            "¡Hola! REGLAS MENSAJE DE BIENVENIDA Y LINK A MINI APP"
+        )
         await welcome_message.pin()
 
 
@@ -129,6 +155,10 @@ async def buy_lootbox(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 f"MENSAJE DE ERROR: {buy_response.message}"
             )
         await update.message.delete()
+    else:
+        await update.message.from_user.send_message(
+            "Este bot solo funciona en grupos. Úsalo en un grupo o supergrupo."
+        )
 
 
 async def open_lootbox(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -158,6 +188,11 @@ async def rules(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 # for testing purposes
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.message.chat.type not in [Chat.GROUP, Chat.SUPERGROUP]:
+        await update.message.from_user.send_message(
+            "Este bot solo funciona en grupos. Úsalo en un grupo o supergrupo."
+        )
+        return
     session = get_session()
     user = crud.get_or_create_user(
         session, update.message.from_user.id, update.message.chat.id
@@ -169,6 +204,7 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         f"Mensajes enviados: {user.number_of_messages_sent}\n"
         f"Letras: {', '.join(user.letters)}\n"
     )
+    session.close()
     await update.message.delete()
 
 
@@ -189,11 +225,8 @@ def main() -> None:
     application.add_handler(
         MessageHandler(filters.TEXT & ~filters.COMMAND, receive_message)
     )
-    application.add_handler(
-        CommandHandler(
-            "reset_message",
-        )
-    )
+    application.add_handler(CommandHandler("stats", stats))
+    application.add_handler(CommandHandler("start", start))
 
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
