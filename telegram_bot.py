@@ -19,6 +19,8 @@ from telegram import (
 )
 from typing import Optional
 from api_routes import process_message, process_buy_lootbox, process_open_lootbox
+import crud
+from database import get_session
 
 
 # function stolen from https://github.com/python-telegram-bot/python-telegram-bot/blob/master/examples/chatmemberbot.py
@@ -99,6 +101,10 @@ async def receive_message(update: Update, context: CallbackContext) -> None:
                 f"MENSAJE DE ERROR: {process_response.message}"
             )
             await update.message.delete()
+    else:
+        await update.message.from_user.send_message(
+            "Este bot solo funciona en grupos. Úsalo en un grupo o supergrupo."
+        )
 
 
 async def buy_lootbox(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -118,11 +124,11 @@ async def buy_lootbox(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                     ]
                 ),
             )
-            await update.message.delete()
         else:
             await update.message.from_user.send_message(
                 f"MENSAJE DE ERROR: {buy_response.message}"
             )
+        await update.message.delete()
 
 
 async def open_lootbox(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -133,18 +139,37 @@ async def open_lootbox(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             update.callback_query.message.chat.id,
             lootbox_id,
         )
+        await update.callback_query.answer()
         if open_response.success:
             await update.callback_query.chat_instance.send_message(
                 f"¡Has abierto la lootbox y has conseguido: {', '.join(open_response.new_letters)}!"
             )
+            await update.callback_query.message.delete()
         else:
-            await update.callback_query.message.edit_text(
+            await update.callback_query.from_user.send_message(
                 f"MENSAJE DE ERROR: {open_response.message}"
             )
 
 
 async def rules(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    pass
+    await update.message.from_user.send_message("REGLAS DEL GRUPO")
+    await update.message.delete()
+
+
+# for testing purposes
+async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    session = get_session()
+    user = crud.get_or_create_user(
+        session, update.message.from_user.id, update.message.chat.id
+    )
+    await update.message.from_user.send_message(
+        f"ID: {user.telegram_user_id}\n"
+        f"Grupo: {user.telegram_group_id}\n"
+        f"Monedas: {user.currency_balance}\n"
+        f"Mensajes enviados: {user.number_of_messages_sent}\n"
+        f"Letras: {', '.join(user.letters)}\n"
+    )
+    await update.message.delete()
 
 
 def main() -> None:
@@ -163,6 +188,11 @@ def main() -> None:
     application.add_handler(CommandHandler("reglas", rules))
     application.add_handler(
         MessageHandler(filters.TEXT & ~filters.COMMAND, receive_message)
+    )
+    application.add_handler(
+        CommandHandler(
+            "reset_message",
+        )
     )
 
     application.run_polling(allowed_updates=Update.ALL_TYPES)
