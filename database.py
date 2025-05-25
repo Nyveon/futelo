@@ -1,6 +1,4 @@
-import os
-from sqlmodel import SQLModel, create_engine, Session, Field
-from typing import Optional, Dict, Any
+from sqlmodel import create_engine, Session
 import json
 
 # Define the database URL

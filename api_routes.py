@@ -1,25 +1,24 @@
 from fastapi import APIRouter, Depends, HTTPException
+from numpy import random
 from sqlmodel import Session
-import random
 
-from database import get_session
+import config
 import crud  # Import CRUD functions
+from database import get_session
 from models import (
-    UserRead,
-    MessageProcessRequest,
-    ProcessResponse,
     LootboxBuyRequest,
     LootboxBuyResponse,
     LootboxOpenRequest,
     LootboxOpenResponse,
+    MessageProcessRequest,
+    ProcessResponse,
+    UserRead,
 )
 from utils import (
     check_letter_limits,
     check_user_concurrent_message_count,
     choose_letters,
 )
-from numpy import random
-import config
 
 # Create an API router
 router = APIRouter()

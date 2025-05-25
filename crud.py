@@ -1,8 +1,6 @@
 from sqlmodel import Session, select
 from models import User, last_user_message, Lootbox
-import json
-import time
-from typing import Optional, Dict
+from typing import Optional
 
 # User operations
 
@@ -64,7 +62,7 @@ def add_letters_to_user(session: Session, user: User, letters: list[str]) -> Use
 
 def get_last_user_message(
     session: Session, telegram_group_id: int
-) -> last_user_message:
+) -> last_user_message | None:
     statement = select(last_user_message).where(
         last_user_message.telegram_group_id == telegram_group_id
     )

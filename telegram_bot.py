@@ -1,4 +1,4 @@
-from config import BOT_TOKEN, MINI_APP_LINK
+from config import BOT_TOKEN
 from telegram.ext import (
     Application,
     ChatMemberHandler,
