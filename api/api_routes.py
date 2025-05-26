@@ -33,40 +33,41 @@ def process_message(
     updates counts, potentially increases limits.
     Assumes the bot might call this *after* a basic check or directly.
     """
-    user = crud.get_or_create_user(
-        session, request.telegram_user_id, request.telegram_group_id
-    )
-
-    is_valid_letters, reason = check_letter_limits(request.text, user.letter_limits)
-    if not is_valid_letters:
-        return ProcessResponse(
-            success=False,
-            message=f"Message failed letter limit check: {reason}.",
-            lost_currency=False,
+    with session.begin():
+        user = crud.get_or_create_user(
+            session, request.telegram_user_id, request.telegram_group_id
         )
 
-    last_user_message = crud.get_or_create_last_user_message(
-        session, request.telegram_group_id
-    )
+        is_valid_letters, reason = check_letter_limits(request.text, user.letter_limits)
+        if not is_valid_letters:
+            return ProcessResponse(
+                success=False,
+                message=f"Message failed letter limit check: {reason}.",
+                lost_currency=False,
+            )
 
-    is_valid_consecutive, reason, needed_currency = check_user_concurrent_message_count(
-        user, last_user_message
-    )
-    if not is_valid_consecutive:
-        return ProcessResponse(
-            success=False,
-            message=f"Message failed consecutive message check: {reason}.",
-            lost_currency=False,
+        last_user_message = crud.get_or_create_last_user_message(
+            session, request.telegram_group_id
         )
 
-    # 2. Update user stats
-    user = crud.update_user_after_message(
-        session, user, last_user_message, needed_currency
-    )
+        is_valid_consecutive, reason, needed_currency = (
+            check_user_concurrent_message_count(user, last_user_message)
+        )
+        if not is_valid_consecutive:
+            return ProcessResponse(
+                success=False,
+                message=f"Message failed consecutive message check: {reason}.",
+                lost_currency=False,
+            )
 
-    return ProcessResponse(
-        success=True, message=None, lost_currency=(needed_currency > 0)
-    )
+        # 2. Update user stats
+        user = crud.update_user_after_message(
+            session, user, last_user_message, needed_currency
+        )
+
+        return ProcessResponse(
+            success=True, message=None, lost_currency=(needed_currency > 0)
+        )
 
 
 @router.post("/lootbox/buy", response_model=LootboxBuyResponse)
@@ -74,8 +75,8 @@ def process_buy_lootbox(
     request: LootboxBuyRequest, session: Session = Depends(get_session)
 ):
     """Allows a user to buy a letter lootbox."""
-    LOOTBOX_COST = config.lootbox_cost
     with session.begin():
+        LOOTBOX_COST = config.lootbox_cost
         user = crud.get_or_create_user(
             session, request.telegram_user_id, request.telegram_group_id
         )
@@ -183,10 +184,13 @@ def process_open_lootbox(
 
 @router.get("/users/{telegram_group_id}/{telegram_user_id}", response_model=UserRead)
 def get_user(
-    telegram_user_id: int, telegram_group_id, session: Session = Depends(get_session)
+    telegram_user_id: int,
+    telegram_group_id: int,
+    session: Session = Depends(get_session),
 ):
     """Fetches user details."""
-    user = crud.get_user(session, telegram_user_id, telegram_group_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found.")
-    return user
+    with session.begin():
+        user = crud.get_user(session, telegram_user_id, telegram_group_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found.")
+        return user
