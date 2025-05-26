@@ -1,6 +1,8 @@
-from sqlmodel import Session, select
-from models import User, last_user_message, Lootbox
 from typing import Optional
+
+from sqlmodel import Session, select
+
+from models import Lootbox, User, last_user_message
 
 # User operations
 
@@ -30,7 +32,7 @@ def get_or_create_user(
             telegram_user_id=telegram_user_id, telegram_group_id=telegram_group_id
         )
         session.add(user)
-        session.commit()
+        session.flush()
         session.refresh(user)  # Load defaults like limits from DB
         print(f"User {telegram_user_id} created.")
     return user
@@ -39,9 +41,6 @@ def get_or_create_user(
 def update_user_currency(session: Session, user: User, change: int) -> User:
     """Updates user's currency balance."""
     user.currency_balance += change
-    session.add(user)
-    session.commit()
-    session.refresh(user)
     return user
 
 
@@ -51,9 +50,6 @@ def add_letters_to_user(session: Session, user: User, letters: list[str]) -> Use
     for letter in letters:
         current_limits[letter] += 1
     user.letter_limits = current_limits
-    session.add(user)
-    session.commit()
-    session.refresh(user)
     return user
 
 
@@ -81,7 +77,7 @@ def get_or_create_last_user_message(
         )
         last_message = last_user_message(telegram_group_id=telegram_group_id)
         session.add(last_message)
-        session.commit()
+        session.flush()
         session.refresh(last_message)
         print(f"Last user message entry for group {telegram_group_id} created.")
     return last_message
@@ -100,7 +96,7 @@ def create_lootbox(
         rarity=rarity,
     )
     session.add(lootbox)
-    session.commit()
+    session.flush()
     session.refresh(lootbox)
     return lootbox
 
@@ -129,9 +125,4 @@ def update_user_after_message(
     else:
         group_last_message.telegram_user_id = user.telegram_user_id
         group_last_message.count = 1
-    session.add(user)
-    session.add(group_last_message)
-    session.commit()
-    session.refresh(user)
-    session.refresh(group_last_message)
     return user

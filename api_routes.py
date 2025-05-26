@@ -140,9 +140,6 @@ def process_open_lootbox(
             )
 
         lootbox.opened = True
-        session.add(lootbox)
-        session.commit()
-
         rarity = lootbox.rarity
         lootbox_config = next(
             (lootbox for lootbox in config.lootboxes if lootbox["rarity"] == rarity),

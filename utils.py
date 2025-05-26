@@ -54,7 +54,7 @@ def check_user_concurrent_message_count(
     if user.number_of_messages_sent == 0:
         needed_currency = -calculate_first_message_currency()
     else:
-        needed_currency = -CURRENCY_AWARDED.get(min(consecutive_count, 3))
+        needed_currency = -CURRENCY_AWARDED.get(min(consecutive_count, 3), 0)
 
     if user.currency_balance < needed_currency:
         return (
