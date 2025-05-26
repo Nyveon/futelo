@@ -4,8 +4,8 @@ from typing import Dict, Optional
 
 from unidecode import unidecode
 
-from config import CURRENCY_AWARDED, lootbox_cost, lootboxes
-from models import User, last_user_message
+from api.config import CURRENCY_AWARDED, lootbox_cost, lootboxes
+from shared.models import User, last_user_message
 
 
 def check_letter_limits(

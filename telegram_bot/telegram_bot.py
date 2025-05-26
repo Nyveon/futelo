@@ -1,5 +1,7 @@
 from typing import Optional
 
+import httpx
+from bot_config import API_LINK, BOT_TOKEN
 from telegram import (
     Chat,
     ChatMember,
@@ -19,10 +21,9 @@ from telegram.ext import (
     filters,
 )
 
-import crud
-from api_routes import process_buy_lootbox, process_message, process_open_lootbox
-from config import BOT_TOKEN
-from database import get_session
+import api.crud as crud
+from api.api_routes import process_buy_lootbox, process_message, process_open_lootbox
+from api.database import get_session
 
 
 # function stolen from https://github.com/python-telegram-bot/python-telegram-bot/blob/master/examples/chatmemberbot.py
@@ -128,6 +129,14 @@ async def receive_message(update: Update, context: CallbackContext) -> None:
     ):
         return
     if update.message.chat.type in [Chat.GROUP, Chat.SUPERGROUP]:
+        process_response = httpx.post(
+            f"{API_LINK}/api/messages/process",
+            data={
+                "telegram_user_id": update.message.from_user.id,
+                "telegram_group_id": update.message.chat.id,
+                "message": update.message.text,
+            },
+        )
         process_response = await process_message(
             update.message.from_user.id, update.message.chat.id, update.message.text
         )

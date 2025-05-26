@@ -2,7 +2,7 @@ from typing import Optional
 
 from sqlmodel import Session, select
 
-from models import Lootbox, User, last_user_message
+from shared.models import Lootbox, User, last_user_message
 
 # User operations
 

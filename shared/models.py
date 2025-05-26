@@ -1,9 +1,11 @@
-from sqlmodel import SQLModel, Field
-from typing import Optional, Dict
 import json
-from database import get_default_limits  # Import helper
-from pydantic import BaseModel
+from typing import Dict, Optional
+
 import sqlalchemy as sa
+from pydantic import BaseModel
+from sqlmodel import Field, SQLModel
+
+from api.database import get_default_limits  # Import helper
 
 
 # --- Database Model ---

@@ -19,7 +19,3 @@ legendary_p=0.00499
 legendary_r=20
 funny_p=0.00001
 funny_r=1
-
-[credentials]
-BOT_TOKEN="token"
-MINI_APP_LINK="link"

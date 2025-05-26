@@ -1,7 +1,8 @@
-import toml
 from math import isclose
 
-with open("config.toml", "r") as f:
+import toml
+
+with open("api/config.toml", "r") as f:
     config = toml.load(f)
 
 # Currency awarded for consecutive messages
@@ -25,6 +26,3 @@ lootboxes = [
 assert isclose(sum([lootbox["probability"] for lootbox in lootboxes]), 1), (
     f"Probabilities must sum to 1 but sum is {sum([lootbox['probability'] for lootbox in lootboxes])}"
 )
-
-BOT_TOKEN = config["credentials"]["BOT_TOKEN"]
-MINI_APP_LINK = config["credentials"]["MINI_APP_LINK"]

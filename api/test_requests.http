@@ -1,0 +1,34 @@
+POST http://127.0.0.1:8000/api/messages/process
+content-type: application/json
+
+{
+    "telegram_user_id": 1,
+    "telegram_group_id": 1,
+    "text": "holak"
+}
+
+###
+
+GET http://127.0.1:8000/api/users/1/1
+
+###
+
+POST http://127.0.0.1:8000/api/lootbox/buy
+content-type: application/json
+
+{
+    "telegram_user_id": 1,
+    "telegram_group_id": 1
+}
+
+###
+
+POST http://127.0.0.1:8000/api/lootbox/open
+content-type: application/json
+
+{
+    "telegram_user_id": 1,
+    "telegram_group_id": 1,
+    "lootbox_id": 4
+}
+
