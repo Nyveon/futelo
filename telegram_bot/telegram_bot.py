@@ -8,6 +8,7 @@ from telegram import (
     ChatMemberUpdated,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
+    Message,
     Update,
 )
 from telegram.ext import (
@@ -225,10 +226,16 @@ async def open_lootbox(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         open_response = LootboxOpenResponse.model_validate(open_response.json())
         await update.callback_query.answer()
         if open_response.success:
-            await update.callback_query.chat_instance.send_message(
-                f"¡Has abierto la lootbox y has conseguido: {', '.join(open_response.new_letters)}!"
-            )
-            await update.callback_query.message.delete()
+            if not open_response.new_letters:
+                await update.callback_query.message.chat.send_message(
+                    "¡Has abierto la lootbox, pero no has conseguido ninguna letra nueva!"
+                )
+            else:
+                await update.callback_query.message.chat.send_message(
+                    f"¡Has abierto la lootbox y has conseguido: {', '.join(open_response.new_letters)}!"
+                )
+            if isinstance(update.callback_query.message, Message):
+                await update.callback_query.message.delete()
         else:
             await update.callback_query.from_user.send_message(
                 f"MENSAJE DE ERROR: {open_response.message}"
