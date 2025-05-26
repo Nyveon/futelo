@@ -181,10 +181,12 @@ async def buy_lootbox(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 f"¡Has conseguido una lootbox de rareza {buy_response.rarity}!\n",
                 reply_markup=InlineKeyboardMarkup(
                     [
-                        InlineKeyboardButton(
-                            "Abrir lootbox",
-                            callback_data=f"open_lootbox_{buy_response.lootbox_id}",
-                        ),
+                        [
+                            InlineKeyboardButton(
+                                "Abrir lootbox",
+                                callback_data=f"open_lootbox_{buy_response.lootbox_id}",
+                            )
+                        ]
                     ]
                 ),
             )
