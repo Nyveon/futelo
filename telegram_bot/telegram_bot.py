@@ -21,9 +21,15 @@ from telegram.ext import (
     filters,
 )
 
-import api.crud as crud
-from api.api_routes import process_buy_lootbox, process_message, process_open_lootbox
-from api.database import get_session
+from shared.models import (
+    LootboxBuyRequest,
+    LootboxBuyResponse,
+    LootboxOpenRequest,
+    LootboxOpenResponse,
+    MessageProcessRequest,
+    ProcessResponse,
+    UserRead,
+)
 
 
 # function stolen from https://github.com/python-telegram-bot/python-telegram-bot/blob/master/examples/chatmemberbot.py
@@ -129,17 +135,17 @@ async def receive_message(update: Update, context: CallbackContext) -> None:
     ):
         return
     if update.message.chat.type in [Chat.GROUP, Chat.SUPERGROUP]:
+        process_request = MessageProcessRequest(
+            telegram_user_id=update.message.from_user.id,
+            telegram_group_id=update.message.chat.id,
+            text=update.message.text,
+        )
         process_response = httpx.post(
             f"{API_LINK}/api/messages/process",
-            data={
-                "telegram_user_id": update.message.from_user.id,
-                "telegram_group_id": update.message.chat.id,
-                "message": update.message.text,
-            },
+            json=process_request.model_dump(),
         )
-        process_response = await process_message(
-            update.message.from_user.id, update.message.chat.id, update.message.text
-        )
+        process_response.raise_for_status()
+        process_response = ProcessResponse.model_validate(process_response.json())
         if process_response.success:
             if process_response.lost_currency:
                 await update.message.from_user.send_message(
@@ -160,9 +166,16 @@ async def buy_lootbox(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     if update.message is None or update.message.from_user is None:
         return
     if update.message.chat.type in [Chat.GROUP, Chat.SUPERGROUP]:
-        buy_response = await process_buy_lootbox(
-            update.message.from_user.id, update.message.chat.id
+        buy_request = LootboxBuyRequest(
+            telegram_user_id=update.message.from_user.id,
+            telegram_group_id=update.message.chat.id,
         )
+        buy_response = httpx.post(
+            f"{API_LINK}/api/lootbox/buy",
+            json=buy_request.model_dump(),
+        )
+        buy_response.raise_for_status()
+        buy_response = LootboxBuyResponse.model_validate(buy_response.json())
         if buy_response.success:
             await update.message.chat.send_message(
                 f"¡Has conseguido una lootbox de rareza {buy_response.rarity}!\n",
@@ -196,11 +209,18 @@ async def open_lootbox(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         return
     if update.callback_query.data.startswith("open_lootbox_"):
         lootbox_id = int(update.callback_query.data.split("_")[2])
-        open_response = await process_open_lootbox(
-            update.callback_query.from_user.id,
-            update.callback_query.message.chat.id,
-            lootbox_id,
+
+        open_request = LootboxOpenRequest(
+            telegram_user_id=update.callback_query.from_user.id,
+            telegram_group_id=update.callback_query.message.chat.id,
+            lootbox_id=lootbox_id,
         )
+        open_response = httpx.post(
+            f"{API_LINK}/api/lootbox/open",
+            json=open_request.model_dump(),
+        )
+        open_response.raise_for_status()
+        open_response = LootboxOpenResponse.model_validate(open_response.json())
         await update.callback_query.answer()
         if open_response.success:
             await update.callback_query.chat_instance.send_message(
@@ -229,18 +249,19 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             "Este bot solo funciona en grupos. Úsalo en un grupo o supergrupo."
         )
         return
-    session = get_session()
-    user = crud.get_or_create_user(
-        session, update.message.from_user.id, update.message.chat.id
+    user = httpx.get(
+        f"{API_LINK}/api/users/{update.message.chat.id}/{update.message.from_user.id}"
     )
+    user.raise_for_status()
+    user = UserRead.model_validate(user.json())
+
     await update.message.from_user.send_message(
         f"ID: {user.telegram_user_id}\n"
         f"Grupo: {user.telegram_group_id}\n"
         f"Monedas: {user.currency_balance}\n"
         f"Mensajes enviados: {user.number_of_messages_sent}\n"
-        f"Letras: {', '.join(user.letters)}\n"
+        f"Letras: {', '.join(user.letter_limits)}\n"
     )
-    session.close()
     await update.message.delete()
 
 
