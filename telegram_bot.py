@@ -1,25 +1,27 @@
-from config import BOT_TOKEN
+from typing import Optional
+
+from telegram import (
+    Chat,
+    ChatMember,
+    ChatMemberUpdated,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Update,
+)
 from telegram.ext import (
     Application,
+    CallbackContext,
+    CallbackQueryHandler,
     ChatMemberHandler,
+    CommandHandler,
     ContextTypes,
     MessageHandler,
     filters,
-    CallbackContext,
-    CommandHandler,
-    CallbackQueryHandler,
 )
-from telegram import (
-    Update,
-    ChatMember,
-    ChatMemberUpdated,
-    Chat,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-)
-from typing import Optional
-from api_routes import process_message, process_buy_lootbox, process_open_lootbox
+
 import crud
+from api_routes import process_buy_lootbox, process_message, process_open_lootbox
+from config import BOT_TOKEN
 from database import get_session
 
 
@@ -56,6 +58,8 @@ def extract_status_change(
 
 
 async def join_chat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.my_chat_member is None or update.effective_chat is None:
+        return
     result = extract_status_change(update.my_chat_member)
     if result is None:
         return
@@ -72,6 +76,8 @@ async def join_chat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.effective_chat is None or update.message is None:
+        return
     if update.effective_chat.type not in [Chat.GROUP, Chat.SUPERGROUP]:
         await update.message.reply_text(
             "Este bot solo funciona en grupos. Úsalo en un grupo o supergrupo."
@@ -99,6 +105,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def greet_chat_members(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> None:
+    if update.chat_member is None or update.effective_chat is None:
+        return
     result = extract_status_change(update.chat_member)
     if result is None:
         return
@@ -113,6 +121,12 @@ async def greet_chat_members(
 
 
 async def receive_message(update: Update, context: CallbackContext) -> None:
+    if (
+        update.message is None
+        or update.message.text is None
+        or update.message.from_user is None
+    ):
+        return
     if update.message.chat.type in [Chat.GROUP, Chat.SUPERGROUP]:
         process_response = await process_message(
             update.message.from_user.id, update.message.chat.id, update.message.text
@@ -134,6 +148,8 @@ async def receive_message(update: Update, context: CallbackContext) -> None:
 
 
 async def buy_lootbox(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.message is None or update.message.from_user is None:
+        return
     if update.message.chat.type in [Chat.GROUP, Chat.SUPERGROUP]:
         buy_response = await process_buy_lootbox(
             update.message.from_user.id, update.message.chat.id
@@ -162,6 +178,13 @@ async def buy_lootbox(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
 
 async def open_lootbox(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if (
+        update.callback_query is None
+        or update.callback_query.from_user is None
+        or update.callback_query.data is None
+        or update.callback_query.message is None
+    ):
+        return
     if update.callback_query.data.startswith("open_lootbox_"):
         lootbox_id = int(update.callback_query.data.split("_")[2])
         open_response = await process_open_lootbox(
@@ -182,12 +205,16 @@ async def open_lootbox(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 
 async def rules(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.message is None or update.message.from_user is None:
+        return
     await update.message.from_user.send_message("REGLAS DEL GRUPO")
     await update.message.delete()
 
 
 # for testing purposes
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.message is None or update.message.from_user is None:
+        return
     if update.message.chat.type not in [Chat.GROUP, Chat.SUPERGROUP]:
         await update.message.from_user.send_message(
             "Este bot solo funciona en grupos. Úsalo en un grupo o supergrupo."
