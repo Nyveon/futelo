@@ -1,7 +1,6 @@
 from typing import Optional
 
 import httpx
-from bot_config import API_LINK, BOT_TOKEN
 from telegram import (
     Chat,
     ChatMember,
@@ -31,6 +30,7 @@ from shared.models import (
     ProcessResponse,
     UserRead,
 )
+from telegram_bot.bot_config import API_LINK, BOT_TOKEN
 
 
 # function stolen from https://github.com/python-telegram-bot/python-telegram-bot/blob/master/examples/chatmemberbot.py

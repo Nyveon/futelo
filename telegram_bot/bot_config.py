@@ -1,6 +1,6 @@
 import toml
 
-with open("bot_config.toml", "r") as f:
+with open("telegram_bot/bot_config.toml", "r") as f:
     config = toml.load(f)
 
 BOT_TOKEN = config["credentials"]["BOT_TOKEN"]
