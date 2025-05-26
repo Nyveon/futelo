@@ -14,3 +14,4 @@ wheels/
 .vscode/
 
 config.toml
+bot_config.toml
