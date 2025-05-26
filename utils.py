@@ -1,9 +1,11 @@
-from unidecode import unidecode
-from typing import Dict, Optional
-from models import User, last_user_message
-from config import CURRENCY_AWARDED, lootboxes, lootbox_cost
 import random
 from math import ceil
+from typing import Dict, Optional
+
+from unidecode import unidecode
+
+from config import CURRENCY_AWARDED, lootbox_cost, lootboxes
+from models import User, last_user_message
 
 
 def check_letter_limits(
@@ -50,7 +52,7 @@ def check_user_concurrent_message_count(
         consecutive_count = 1
 
     if user.number_of_messages_sent == 0:
-        needed_currency = calculate_first_message_currency()
+        needed_currency = -calculate_first_message_currency()
     else:
         needed_currency = -CURRENCY_AWARDED.get(min(consecutive_count, 3))
 
